@@ -1,0 +1,11 @@
+.vs/
+X64/
+Debug/
+Release/
+Release - CRINKLER/
+obj/
+bin/
+
+*.user
+
+REPORT.html
