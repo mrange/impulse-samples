@@ -48,9 +48,6 @@ extern "C" {
   
   static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-  #pragma data_seg(".giSampleRate")
-  static int giSampleRate = SU_SAMPLE_RATE;
-
   #pragma data_seg(".xres")
   static int xres = XRES;
   #pragma data_seg(".yres")

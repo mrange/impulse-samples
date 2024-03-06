@@ -252,11 +252,18 @@ int __cdecl main() {
 
     // Windows message handling done, let's draw some gfx
 
-    // Get the time from the current wave position
+    // Get current wave position
     auto waveGetPosOk = waveOutGetPosition(hwo, &waveTime, sizeof(MMTIME));
     assert(waveGetPosOk == MMSYSERR_NOERROR);
 
-    float demoTime = waveTime.u.sample/((float)SU_SAMPLE_RATE);
+    // Have we passed the end sample? If so then we are done
+    auto currentSample = waveTime.u.sample;
+    if (currentSample >= SU_LENGTH_IN_SAMPLES) {
+      done = 1;
+    }
+
+    // Compute the demoTime from the current sample position
+    auto demoTime = currentSample/((float)SU_SAMPLE_RATE);
 
     // Draw the demo
     draw_demo(demoTime);
