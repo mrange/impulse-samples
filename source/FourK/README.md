@@ -6,7 +6,7 @@ I haven't divulged all the trade secrets I know, as I believe in leaving room fo
 
 ## Code License: WTFPL
 
-Unless otherwise specified, all code is licensed under the [WTFPL](https://www.wtfpl.net/).
+Unless otherwise specified, all code is licensed under the [WTFPL](http://www.wtfpl.net/).
 
 ## Music License: TBD
 
@@ -24,7 +24,7 @@ Music provided by Virgill as an example of using Sointu to create compact songs.
 
 GitHub: [Crinkler](https://github.com/runestubbe/Crinkler)
 
-Crinkler is a Visual Studio linker that specializes in producing small binaries by implementing compression and intelligent techniques. Refer to the release notes for fascinating insights into how Crinkler reduces program size.
+Crinkler is a Visual Studio linker that specializes in producing small binaries by implementing compression and intelligent techniques. Refer to the [manual](https://github.com/runestubbe/Crinkler/blob/master/doc/manual.txt) for fascinating insights into how Crinkler reduces program size.
 
 > Note: Crinkler generates a detailed report named `Report.html` during the build process, providing insight into the space allocation within the final executable.
 
@@ -67,7 +67,3 @@ Download: [PPPE](https://www.mzrst.com/)
 
 PPPE is a program facilitating the inspection of Windows executables. It serves as a substitute for the classic `Depends.exe`, which may not function correctly anymore.
 
-1. PPPE - For file inspection - [PPPE](https://www.mzrst.com/)
-2. Shader Minifier - For shader code minification - [Shader_Minifier](https://github.com/laurentlb/Shader_Minifier)
-3. Sointu - For music production in compact binaries - [Sointu](https://github.com/vsariola/sointu)
-4. 4Klang - For producing compact music - [4Klang](https://github.com/hzdgopher/4klang)
