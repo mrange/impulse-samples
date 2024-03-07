@@ -1,78 +1,73 @@
-# 4KiB Windows Demo example
-A non-optimal example on how to use tools that are available on github but not commonly known to build tiny executables.
+# 4KiB Windows Demo Example
 
-I haven't included all trade-secrets I know. I want to leave the joy of discovery to others as well.
+This is a demonstration showcasing the utilization of lesser-known tools available on GitHub to construct tiny executables for the demo scene. While this example may not be optimal, it serves as a starting point for leveraging these tools.
+
+I haven't divulged all the trade secrets I know, as I believe in leaving room for others to explore and discover the joy of these techniques.
 
 ## Code License: WTFPL
 
-Unless other specified all code is licensed under: [WTFPL](https://www.wtfpl.net/)
+Unless otherwise specified, all code is licensed under the [WTFPL](https://www.wtfpl.net/).
 
 ## Music License: TBD
 
-Music provided by Virgill as an example on how to use Sointu to create tiny songs.
+Music provided by Virgill as an example of using Sointu to create compact songs.
 
 ## Building
 
-1. Open solution in VS2022.
-2. Hit Ctrl-F5
-3. Should work!
+1. Open the solution in Visual Studio 2022.
+2. Press Ctrl-F5.
+3. It should work seamlessly!
 
-## Tools used to make it happen
+## Tools Used to Make It Happen
 
 ### Crinkler
 
-Github: https://github.com/runestubbe/Crinkler
+GitHub: [Crinkler](https://github.com/runestubbe/Crinkler)
 
-Crinkler is a linker for Visual Studio that focuses on producing small binaries by applying compression and smart techniques.
+Crinkler is a Visual Studio linker that specializes in producing small binaries by implementing compression and intelligent techniques. Refer to the release notes for fascinating insights into how Crinkler reduces program size.
 
-Read the release notes for some pretty amazing facts on how Crinkler make your program small.
+> Note: Crinkler generates a detailed report named `Report.html` during the build process, providing insight into the space allocation within the final executable.
 
-> Note: Crinkler produces a report at the build called `Report.html` that gives insight in what exactly takes up space in the final executable.
+### Shader Minifier
 
-### Shader minifier
+GitHub: [Shader_Minifier](https://github.com/laurentlb/Shader_Minifier)
 
-Github: https://github.com/laurentlb/Shader_Minifier
-
-Rewrites my fat shader code into slim easy to compress shader code.
+This tool transforms bulky shader code into streamlined, easily compressible versions.
 
 ```bash
-# Minifies shader into "readable" minified shader code
+# Minify shader into "readable" format
 ..\shader_minifier.exe .\shader.fx --format indented -o shader_mini.fx
 
-# Minifies shader into "unreadable" minified shader code meant to be included in your project
+# Minify shader into "unreadable" format for project inclusion
 ..\shader_minifier.exe .\shader.fx --format c-array -o shader.inl
 ```
 
 ### Sointu
 
-Github: https://github.com/vsariola/sointu
+GitHub: [Sointu](https://github.com/vsariola/sointu)
 
-Music program that allows skilled musicians to produce amazing music that takes very little space.
+Sointu is a music program enabling skilled musicians to create remarkable music occupying minimal space.
 
-Made by amazing Pestis.
+Developed by the talented Pestis.
 
 ```bash
-# Generate assembler code from sointu song file
+# Generate assembler code from Sointu song file
 ..\sointu-compile.exe -arch 386 -e "h,asm" uglyverse.yml
 ```
 
 ### 4Klang
 
-Github: https://github.com/hzdgopher/4klang
+GitHub: [4Klang](https://github.com/hzdgopher/4klang)
 
-Another tool to produce amazing music that is very compact. The only downside: You need to have some talent as a musician!
-
+Another tool for producing remarkable, compact music. However, proficiency as a musician is required.
 
 ### PPPE
 
-Download: https://www.mzrst.com/
+Download: [PPPE](https://www.mzrst.com/)
 
-Program that let's you inspect Windows executables.
+PPPE is a program facilitating the inspection of Windows executables. It serves as a substitute for the classic `Depends.exe`, which may not function correctly anymore.
 
-Replacement to the classic `Depends.exe` that I can't make work anymore.
-
-1. PPPE - To inspect files - https://www.mzrst.com/
-3. Shader minifier - Minifies shader code - https://github.com/laurentlb/Shader_Minifier
-4. Sointu - Produces music for compact binaries - https://github.com/vsariola/sointu
-5. 4Klang - Produces music for compact binaries - https://github.com/hzdgopher/4klang
-
+1. PPPE - For file inspection - [PPPE](https://www.mzrst.com/)
+2. Shader Minifier - For shader code minification - [Shader_Minifier](https://github.com/laurentlb/Shader_Minifier)
+3. Sointu - For music production in compact binaries - [Sointu](https://github.com/vsariola/sointu)
+4. 4Klang - For producing compact music - [4Klang](https://github.com/hzdgopher/4klang)
