@@ -1,5 +1,7 @@
 # 4KiB Windows Demo Example
 
+![The demo](images/window.jpg)
+
 This is a demonstration showcasing the utilization of lesser-known tools available on GitHub to construct tiny executables for the demo scene. While this example may not be optimal, it serves as a starting point for leveraging these tools.
 
 I haven't divulged all the trade secrets I know, as I believe in leaving room for others to explore and discover the joy of these techniques.
