@@ -149,10 +149,16 @@
     <CustomBuild Include="uglyverse.asm">
       <FileType>Text</FileType>
       <Command>$(SolutionDir)nasm.exe -f win32 -o "$(IntermediateOutputPath)uglyverse.obj" "$(ProjectDir)uglyverse.asm"</Command>
-      <Message>Assembling music</Message>
+      <Message>Assembling cool music...</Message>
       <Outputs>$(IntermediateOutputPath)uglyverse.obj</Outputs>
       <AdditionalInputs>$(ProjectDir)uglyverse.h</AdditionalInputs>
       <LinkObjects>true</LinkObjects>
+    </CustomBuild>
+    <CustomBuild Include="shader.fx">
+      <FileType>Text</FileType>
+      <Command>$(SolutionDir)shader_minifier.exe "$(ProjectDir)shader.fx" --format c-array -o "$(ProjectDir)shader.inl"</Command>
+      <Message>Minifying cool gfx...</Message>
+      <Outputs>$(ProjectDir)shader.inl</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
