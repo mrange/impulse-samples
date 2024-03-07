@@ -22,7 +22,7 @@ Music provided by Virgill as an example of using Sointu to create compact songs.
 
 ## Tools Used to Make It Happen
 
-### Visual Studio 2022: Your Development Hub
+### Visual Studio 2022
 
 Download: [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
 
@@ -40,7 +40,7 @@ Crinkler is a linker for Visual Studio that specializes in producing small binar
 
 ### Shader Minifier
 
-GitHub: [Shader_Minifier](https://github.com/laurentlb/Shader_Minifier)
+GitHub: [Shader Minifier](https://github.com/laurentlb/Shader_Minifier)
 
 This tool transforms bulky shader code into streamlined, easily compressible versions.
 
