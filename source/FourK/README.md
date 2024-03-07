@@ -22,6 +22,14 @@ Music provided by Virgill as an example of using Sointu to create compact songs.
 
 ## Tools Used to Make It Happen
 
+### Visual Studio 2022: Your Development Hub
+
+Download: [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
+
+For this example, Visual Studio 2022 serves as the primary development environment. The Community edition, available for free, offers essential tools without major licensing constraints for demo developers (as far as I can tell).
+
+During installation, select `Desktop development with C++`.
+
 ### Crinkler
 
 GitHub: [Crinkler](https://github.com/runestubbe/Crinkler)
