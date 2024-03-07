@@ -146,6 +146,12 @@
     <ClCompile Include="fourk-win-demo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="uglyverse.yml">
+      <FileType>Text</FileType>
+      <Command>$(SolutionDir)sointu-compile.exe -arch 386 -e h,asm -o $(ProjectDir) $(ProjectDir)uglyverse.yml</Command>
+      <Message>Sointuing the music...</Message>
+      <Outputs>$(ProjectDir)uglyverse.asm</Outputs>
+    </CustomBuild>
     <CustomBuild Include="uglyverse.asm">
       <FileType>Text</FileType>
       <Command>$(SolutionDir)nasm.exe -f win32 -o "$(IntermediateOutputPath)uglyverse.obj" "$(ProjectDir)uglyverse.asm"</Command>
