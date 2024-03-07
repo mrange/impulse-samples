@@ -26,7 +26,7 @@ Music provided by Virgill as an example of using Sointu to create compact songs.
 
 GitHub: [Crinkler](https://github.com/runestubbe/Crinkler)
 
-Crinkler is a Visual Studio linker that specializes in producing small binaries by implementing compression and intelligent techniques. Refer to the [manual](https://github.com/runestubbe/Crinkler/blob/master/doc/manual.txt) for fascinating insights into how Crinkler reduces program size.
+Crinkler is a linker for Visual Studio that specializes in producing small binaries by implementing compression and intelligent techniques. Refer to the [manual](https://github.com/runestubbe/Crinkler/blob/master/doc/manual.txt) for fascinating insights into how Crinkler reduces program size.
 
 > Note: Crinkler generates a detailed report named `Report.html` during the build process, providing insight into the space allocation within the final executable.
 
