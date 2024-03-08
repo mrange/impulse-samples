@@ -45,7 +45,7 @@ extern "C" {
   #pragma bss_seg(".mainbss")
   int       _fltused;
   SUsample  waveBuffer[SU_BUFFER_LENGTH];
-  
+
   static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
   #pragma data_seg(".xres")
@@ -114,18 +114,18 @@ extern "C" {
   , SU_SAMPLE_RATE * sizeof(SUsample) * SU_CHANNEL_COUNT  // nAvgBytesPerSec
   , sizeof(SUsample) * SU_CHANNEL_COUNT                   // nBlockAlign
   , sizeof(SUsample) * 8                                  // wBitsPerSample
-  , 0                                                     // cbSize         
+  , 0                                                     // cbSize
   };
 
   #pragma data_seg(".waveHeader")
   WAVEHDR waveHeader =
   {
-    (LPSTR)waveBuffer                   // lpData            
-  , SU_BUFFER_LENGTH * sizeof(SUsample) // dwBufferLength    
-  , 0                                   // dwBytesRecorded   
-  , 0                                   // dwUser            
-  , 0                                   // dwFlags           
-  , 0                                   // dwLoops           
+    (LPSTR)waveBuffer                   // lpData
+  , SU_BUFFER_LENGTH * sizeof(SUsample) // dwBufferLength
+  , 0                                   // dwBytesRecorded
+  , 0                                   // dwUser
+  , 0                                   // dwFlags
+  , 0                                   // dwLoops
   , 0                                   // lpNext
   , 0                                   // reserved
   };

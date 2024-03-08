@@ -127,7 +127,7 @@ int __cdecl main() {
   auto dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_POPUP;
 
   // Adjust the window rect so that the client rect gets the desired size
-	BOOL rectOk = AdjustWindowRect(&windowRect, dwStyle, 0);
+  auto rectOk = AdjustWindowRect(&windowRect, dwStyle, 0);
   assert(rectOk);
 
   auto width  = windowRect.right  - windowRect.left;
@@ -228,7 +228,7 @@ int __cdecl main() {
   , sizeof(waveHeader)
   );
   assert(wavePrepareOk == MMSYSERR_NOERROR);
-  
+
   auto waveWriteOk = waveOutWrite(
     hwo
   , &waveHeader
