@@ -16,8 +16,19 @@
 
 #version 430
 
+// ----------------------------------------------------------------------------
+// Required prelude
+
+// Set by draw_demo
 uniform vec4 state;
+// The result of the shader
 out vec4 fcol;
+
+// ----------------------------------------------------------------------------
+// The Shader
+//  The entrypoint is: void main()
+//  gl_FragCoord is the input fragment position
+//  fcol is the output fragment color
 
 const float PI        = acos(-1);
 const float PI_2      = .5*PI;
