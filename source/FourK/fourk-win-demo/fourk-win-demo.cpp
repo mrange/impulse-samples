@@ -16,6 +16,8 @@
 
 #include "fourk-win-demo.h"
 
+#include <math.h>
+
 extern "C" {
 
 #ifdef _DEBUG
@@ -101,6 +103,24 @@ extern "C" {
     // Apply default window message handling
     return(DefWindowProcA(hWnd, uMsg, wParam, lParam));
   }
+
+  #pragma code_seg(".render_song")
+  void render_song(SampleType * waveBuffer) {
+    auto pi   = acosf(-1);
+    auto tau  = 2*pi;
+
+    for (auto i = 0; i < LENGTH_IN_SAMPLES; ++i) {
+      auto t = i/44100.0F;
+
+      auto sample = sinf(440.F*tau*t);
+
+      for(auto j = 0; j < CHANNEL_COUNT; ++j) {
+        *waveBuffer = sample;
+        ++waveBuffer;
+      }
+    }
+  }
+
 }
 
 #pragma code_seg(".main")
@@ -186,27 +206,14 @@ int __cdecl main() {
   //  to a wave buffer
   //  Then we just ask Windows to play it for us
 
-  // Version v0.3.0 of sointu has an issue in that the EBX register is not restored
-  //  So save it with some inline assembler
-  //  Fix coming: https://github.com/vsariola/sointu/issues/130
-  _asm {
-    push ebx
-  }
-  // Load gmdls sound
-  su_load_gmdls();
-  // And restore the ebx register
-  _asm {
-    pop ebx
-  }
-
-#define USE_SOUND_THREAD
+//#define USE_SOUND_THREAD
 #ifdef USE_SOUND_THREAD
   // Create the wave buffer in a separate thread so we don't have to wait for it
-  auto hthread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)su_render_song, waveBuffer, 0, 0);
+  auto hthread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)render_song, waveBuffer, 0, 0);
   assert(hthread);
 #else
   // We don't mind waiting for the sound.
-  su_render_song(waveBuffer);
+  render_song(waveBuffer);
 #endif
 
   // Play the sound buffer
@@ -258,12 +265,12 @@ int __cdecl main() {
 
     // Have we passed the end sample? If so then we are done
     auto currentSample = waveTime.u.sample;
-    if (currentSample >= SU_LENGTH_IN_SAMPLES) {
+    if (currentSample >= LENGTH_IN_SAMPLES) {
       done = 1;
     }
 
     // Compute the demoTime from the current sample position
-    auto demoTime = currentSample/((float)SU_SAMPLE_RATE);
+    auto demoTime = currentSample/((float)SAMPLE_RATE);
 
     // Draw the demo
     draw_demo(demoTime);

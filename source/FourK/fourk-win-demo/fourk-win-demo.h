@@ -35,16 +35,21 @@
 #include <GL/gl.h>
 #include "glext.h"
 
-#include "uglyverse.h"
-
 
 #define XRES 1600
 #define YRES 900
 
+#define SAMPLE_RATE          44100
+#define CHANNEL_COUNT        2
+#define LENGTH_IN_SAMPLES    (SAMPLE_RATE*10)
+#define BUFFER_LENGTH        (LENGTH_IN_SAMPLES*CHANNEL_COUNT)
+
+typedef float SampleType;
+
 extern "C" {
   #pragma bss_seg(".mainbss")
-  int       _fltused;
-  SUsample  waveBuffer[SU_BUFFER_LENGTH];
+  int         _fltused;
+  SampleType  waveBuffer[BUFFER_LENGTH];
 
   static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -108,20 +113,20 @@ extern "C" {
   #pragma data_seg(".waveFormatSpecification")
   WAVEFORMATEX waveFormatSpecification =
   {
-    WAVE_FORMAT_IEEE_FLOAT                                // wFormatTag
-  , SU_CHANNEL_COUNT                                      // nChannels
-  , SU_SAMPLE_RATE                                        // nSamplesPerSec
-  , SU_SAMPLE_RATE * sizeof(SUsample) * SU_CHANNEL_COUNT  // nAvgBytesPerSec
-  , sizeof(SUsample) * SU_CHANNEL_COUNT                   // nBlockAlign
-  , sizeof(SUsample) * 8                                  // wBitsPerSample
-  , 0                                                     // cbSize
+    WAVE_FORMAT_IEEE_FLOAT                            // wFormatTag
+  , CHANNEL_COUNT                                     // nChannels
+  , SAMPLE_RATE                                       // nSamplesPerSec
+  , SAMPLE_RATE * sizeof(SampleType) * CHANNEL_COUNT  // nAvgBytesPerSec
+  , sizeof(SampleType) * CHANNEL_COUNT                // nBlockAlign
+  , sizeof(SampleType) * 8                            // wBitsPerSample
+  , 0                                                 // cbSize
   };
 
   #pragma data_seg(".waveHeader")
   WAVEHDR waveHeader =
   {
     (LPSTR)waveBuffer                   // lpData
-  , SU_BUFFER_LENGTH * sizeof(SUsample) // dwBufferLength
+  , BUFFER_LENGTH * sizeof(SampleType)  // dwBufferLength
   , 0                                   // dwBytesRecorded
   , 0                                   // dwUser
   , 0                                   // dwFlags

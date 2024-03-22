@@ -146,20 +146,6 @@
     <ClCompile Include="fourk-win-demo.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="uglyverse.yml">
-      <FileType>Text</FileType>
-      <Command>$(SolutionDir)sointu-compile.exe -arch 386 -e h,asm -o $(ProjectDir) $(ProjectDir)uglyverse.yml</Command>
-      <Message>Sointuing the music...</Message>
-      <Outputs>$(ProjectDir)uglyverse.asm</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="uglyverse.asm">
-      <FileType>Text</FileType>
-      <Command>$(SolutionDir)nasm.exe -f win32 -o "$(IntermediateOutputPath)uglyverse.obj" "$(ProjectDir)uglyverse.asm"</Command>
-      <Message>Assembling cool music...</Message>
-      <Outputs>$(IntermediateOutputPath)uglyverse.obj</Outputs>
-      <AdditionalInputs>$(ProjectDir)uglyverse.h</AdditionalInputs>
-      <LinkObjects>true</LinkObjects>
-    </CustomBuild>
     <CustomBuild Include="shader.fx">
       <FileType>Text</FileType>
       <Command>$(SolutionDir)shader_minifier.exe "$(ProjectDir)shader.fx" --format c-array -o "$(ProjectDir)shader.inl"</Command>
@@ -170,7 +156,6 @@
   <ItemGroup>
     <ClInclude Include="fourk-win-demo.h" />
     <ClInclude Include="glext.h" />
-    <ClInclude Include="uglyverse.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
