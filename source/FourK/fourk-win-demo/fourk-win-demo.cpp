@@ -106,11 +106,11 @@ extern "C" {
 
   #pragma code_seg(".render_song")
   void render_song(SampleType * waveBuffer) {
-    auto pi   = acosf(-1);
+    auto pi   = 3.141592654F;
     auto tau  = 2*pi;
 
     for (auto i = 0; i < LENGTH_IN_SAMPLES; ++i) {
-      auto t = i/44100.0F;
+      auto t = ((float)i)/SAMPLE_RATE;
 
       auto sample = sinf(440.F*tau*t);
 
