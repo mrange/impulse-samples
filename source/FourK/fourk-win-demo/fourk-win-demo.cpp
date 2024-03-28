@@ -126,13 +126,18 @@ extern "C" {
     for (auto i = 0; i < LENGTH_IN_SAMPLES; ++i) {
       auto t = ((float)i)/SAMPLE_RATE;
 
-      float musicTime = 32e3*t;
-      float kickTime  = musicTime/16384.;
-      float nkickTime = floor(kickTime);
-      float kick      = 1.-(kickTime-nkickTime)*16384./1e4;
+      float musicTime = 32768.F*t;
+      float kickTime  = musicTime/16384.F;
+      float nkickTime = floorf(kickTime);
 
-      auto tunew      = i32(fmodf(musicTime,(i32(musicTime)&i32(musicTime)>>12))/powf(2.F,fmodf(kickTime*16.F,4.F)-3.))&127;
-      auto kickw      = i32(powf(8e3F,kick))&64;
+      // Can be cast to i16 it seems
+      INT32 tune0     = i32(i32(musicTime)&i32(musicTime)>>12);
+      float tune1     = fmodf(musicTime,tune0);
+      float tune2     = 4.F*(kickTime*4.F-floorf(kickTime*4.F));
+      float tune3     = powf(2.F,tune2)/8.;
+      auto tunew      = i32(tune1/tune3)&127;
+      // Precalculate powf
+      auto kickw      = i32(powf(8192.F,1.F-(kickTime-nkickTime)*16384.F/1e4))&64;
       auto wave       = (tunew+kickw)&255;
 
 

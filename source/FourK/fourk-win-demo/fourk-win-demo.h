@@ -41,7 +41,7 @@
 
 #define SAMPLE_RATE          44100
 #define CHANNEL_COUNT        2
-#define LENGTH_IN_SAMPLES    (SAMPLE_RATE*10)
+#define LENGTH_IN_SAMPLES    (SAMPLE_RATE*32)
 #define BUFFER_LENGTH        (LENGTH_IN_SAMPLES*CHANNEL_COUNT)
 
 typedef float SampleType;
