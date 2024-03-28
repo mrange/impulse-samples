@@ -18,6 +18,18 @@
 
 #include <math.h>
 
+template<typename T>
+__forceinline INT32 i32(T && v)
+{
+  return static_cast<INT32>(v);
+}
+
+template<typename T>
+__forceinline INT16 i16(T && v)
+{
+  return static_cast<INT32>(v);
+}
+
 extern "C" {
 
 #ifdef _DEBUG
@@ -104,6 +116,8 @@ extern "C" {
     return(DefWindowProcA(hWnd, uMsg, wParam, lParam));
   }
 
+  using sample_type = UINT8;
+
   #pragma code_seg(".render_song")
   void render_song(SampleType * waveBuffer) {
     auto pi   = 3.141592654F;
@@ -112,7 +126,17 @@ extern "C" {
     for (auto i = 0; i < LENGTH_IN_SAMPLES; ++i) {
       auto t = ((float)i)/SAMPLE_RATE;
 
-      auto sample = sinf(440.F*tau*t);
+      float musicTime = 32e3*t;
+      float kickTime  = musicTime/16384.;
+      float nkickTime = floor(kickTime);
+      float kick      = 1.-(kickTime-nkickTime)*16384./1e4;
+
+      auto tunew      = i32(fmodf(musicTime,(i32(musicTime)&i32(musicTime)>>12))/powf(2.F,fmodf(kickTime*16.F,4.F)-3.))&127;
+      auto kickw      = i32(powf(8e3F,kick))&64;
+      auto wave       = (tunew+kickw)&255;
+
+
+      auto sample = wave/256.F-1.F;
 
       for(auto j = 0; j < CHANNEL_COUNT; ++j) {
         *waveBuffer = sample;
