@@ -24,6 +24,11 @@ __forceinline INT32 i32(T && v)
   return static_cast<INT32>(v);
 }
 
+__forceinline float fractf(float v)
+{
+  return v-floorf(v);
+}
+
 template<typename T>
 __forceinline INT16 i16(T && v)
 {
@@ -127,17 +132,22 @@ extern "C" {
       auto t = ((float)i)/SAMPLE_RATE;
 
       float musicTime = 32768.F*t;
-      float kickTime  = musicTime/16384.F;
-      float nkickTime = floorf(kickTime);
+      // 120 BPM
+      float kickTime  = 2.F*t;
+      float kickTime4 = 4.F*kickTime;
 
       // Can be cast to i16 it seems
-      INT32 tune0     = i32(i32(musicTime)&i32(musicTime)>>12);
+      INT32 time0     = i32(musicTime);
+      INT32 tune0     = i32(time0&(time0>>12));
+      // TODO: Problematic
       float tune1     = fmodf(musicTime,tune0);
-      float tune2     = 4.F*(kickTime*4.F-floorf(kickTime*4.F));
-      float tune3     = powf(2.F,tune2)/8.;
-      auto tunew      = i32(tune1/tune3)&127;
+      float tune2     = 4.F*(fractf(kickTime4))-3.F;
       // Precalculate powf
-      auto kickw      = i32(powf(8192.F,1.F-(kickTime-nkickTime)*16384.F/1e4))&64;
+      float tune3     = powf(2.F,-tune2);
+      // TODO: Problematic
+      auto tunew      = i32(tune1*tune3)&127;
+      // Precalculate powf
+      auto kickw      = i32(powf(8192.F,1.F-(fractf(kickTime))*16384.F/1e4))&64;
       auto wave       = (tunew+kickw)&255;
 
 
