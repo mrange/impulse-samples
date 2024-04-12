@@ -35,11 +35,15 @@
 #include <GL/gl.h>
 #include "glext.h"
 
-#include "uglyverse.h"
+#define SU_LENGTH_IN_SAMPLES  (1920*1080)
+#define SU_SAMPLE_RATE        44100
+#define SU_CHANNEL_COUNT      1
+#define SU_BUFFER_LENGTH      (SU_LENGTH_IN_SAMPLES*SU_CHANNEL_COUNT)
 
+using SUsample = char;
 
-#define XRES 1600
-#define YRES 900
+#define XRES 1920
+#define YRES 1080
 
 extern "C" {
   #pragma bss_seg(".mainbss")
@@ -108,7 +112,7 @@ extern "C" {
   #pragma data_seg(".waveFormatSpecification")
   WAVEFORMATEX waveFormatSpecification =
   {
-    WAVE_FORMAT_IEEE_FLOAT                                // wFormatTag
+    WAVE_FORMAT_PCM                                       // wFormatTag
   , SU_CHANNEL_COUNT                                      // nChannels
   , SU_SAMPLE_RATE                                        // nSamplesPerSec
   , SU_SAMPLE_RATE * sizeof(SUsample) * SU_CHANNEL_COUNT  // nAvgBytesPerSec

@@ -17,7 +17,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ecaa06c2-61b3-49b0-8eda-c7d411b4d056}</ProjectGuid>
+    <ProjectGuid>{58F054BB-A7DF-4F9F-9DAF-6AC8919D230A}</ProjectGuid>
     <RootNamespace>onek-win-demo</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>

@@ -14,7 +14,9 @@
   0. You just DO WHAT THE FUCK YOU WANT TO.
 */
 
-#include "fourk-win-demo.h"
+#include "onek-win-demo.h"
+
+#include "math.h"
 
 extern "C" {
 
@@ -181,35 +183,16 @@ int __cdecl main() {
   // Init our demo
   init_demo();
 
-  // Now init the music.
-  //  The way sointu works is that we call su_render_song which writes samples
-  //  to a wave buffer
-  //  Then we just ask Windows to play it for us
-
-  // Version v0.3.0 of sointu has an issue in that the EBX register is not restored
-  //  So save it with some inline assembler
-  //  Fix coming: https://github.com/vsariola/sointu/issues/130
-  _asm {
-    push ebx
-  }
-  // Load gmdls sound
-  su_load_gmdls();
-  // And restore the ebx register
-  _asm {
-    pop ebx
-  }
-
-#define USE_SOUND_THREAD
-#ifdef USE_SOUND_THREAD
-  // Create the wave buffer in a separate thread so we don't have to wait for it
-  auto hthread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)su_render_song, waveBuffer, 0, 0);
-  assert(hthread);
-#else
-  // We don't mind waiting for the sound.
-  su_render_song(waveBuffer);
-#endif
-
   // Play the sound buffer
+
+  const double PI     = 3.141592654;
+  const double TAU    = 2 * PI;
+  const double ifreq  = 1. / SU_SAMPLE_RATE;
+  for (int i = 0; i < SU_LENGTH_IN_SAMPLES; ++i) {
+    auto t = i * ifreq;
+    auto w = 0.25*sin(t * 440 * TAU);
+    waveBuffer[i] = static_cast<char>(w * 127.+128);
+  }
 
   HWAVEOUT hwo;
   auto waveOpenOk = waveOutOpen(
