@@ -114,13 +114,8 @@ int __cdecl main() {
   auto hinstance = GetModuleHandle(0);
   assert(hinstance);
 
-  // Sets up a Rebecca purple brush that will be visible if the shader fails for some reason
-  auto hbackground = CreateSolidBrush(RGB(0x66, 0x33, 0x99));
-  assert(hbackground);
-
   // Setups the windows class
   windowClassSpecification.hInstance      = hinstance;
-  windowClassSpecification.hbrBackground  = hbackground;
 
   // Registers the windows class
   auto regOk = RegisterClassA(&windowClassSpecification);
