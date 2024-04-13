@@ -46,8 +46,18 @@ vec3 music(float time) {
 
 void main() {
   vec4 gf   = gl_FragCoord;
-  float t   = (gf.x+gf.y*state.y)/44100.;
-  vec3 m    = music(t);
-  vec3 col  = vec3(m.x);
-  fcol = vec4(col, 1.0);
+  float tm  = (gf.x+gf.y*state.y)/44100;
+  float t   = state.x+1E-3*gf.x/state.y;
+  vec3 m    = music(state.x == 0 ? tm : t);
+  
+  float y   = -1+2*gf.y/state.z;
+  float d   = abs(abs(y)-m.x-.125);
+  
+  vec3 pcol = 1+sin(vec3(0,1,2)+t);
+  vec3 col  = vec3(0);
+  col    += pcol*1E-4/max(d*d, 1E-5);
+  col    += m.y*pcol.zxy*1E-1/max(abs(y), 1E-2);
+  col    = tanh(col);
+  col    = sqrt(col);
+  fcol   = vec4(state.x == 0 ? vec3(m.x): col, 1);
 }

@@ -62,45 +62,14 @@ extern "C" {
     ((PFNGLUNIFORM4FPROC)wglGetProcAddress(nm_glUniform4f))(
         0 // Uniform location
       , time
-      , static_cast<GLfloat>(xres)
-      , static_cast<GLfloat>(yres)
+      , static_cast<GLfloat>(XRES)
+      , static_cast<GLfloat>(YRES)
       , 0
       );
     // Draws a rect over the entire window with fragment shader providing the gfx
     glRects(-1, -1, 1, 1);
   }
 
-  #pragma code_seg(".WndProc")
-  LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-  {
-    // Let's ignore these
-    if (uMsg == WM_SYSCOMMAND && (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER))
-      return 0;
-
-    // It's time to stop!
-    if (uMsg == WM_CLOSE || uMsg == WM_DESTROY || (uMsg == WM_KEYDOWN && wParam == VK_ESCAPE)) {
-      PostQuitMessage(0);
-      return 0;
-    }
-
-    // Resized the window? No problem!
-    if (uMsg == WM_SIZE) {
-      xres = LOWORD(lParam);
-      yres = HIWORD(lParam);
-      glViewport(0, 0, xres, yres);
-    }
-
-    // Another way to stop!
-    if (uMsg == WM_CHAR || uMsg == WM_KEYDOWN) {
-      if (wParam == VK_ESCAPE) {
-        PostQuitMessage(0);
-        return 0;
-      }
-    }
-
-    // Apply default window message handling
-    return(DefWindowProcA(hWnd, uMsg, wParam, lParam));
-  }
 }
 
 #pragma code_seg(".main")
@@ -109,36 +78,18 @@ void entrypoint() {
 #else
 int __cdecl main() {
 #endif
-  auto hinstance = GetModuleHandle(0);
-  assert(hinstance);
-
-  // Setups the windows class
-  windowClassSpecification.hInstance      = hinstance;
-
-  // Registers the windows class
-  auto regOk = RegisterClassA(&windowClassSpecification);
-  assert(regOk);
-
   auto dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_POPUP;
 
-  // Adjust the window rect so that the client rect gets the desired size
-  auto rectOk = AdjustWindowRect(&windowRect, dwStyle, 0);
-  assert(rectOk);
-
-  auto width  = windowRect.right  - windowRect.left;
-  auto height = windowRect.bottom - windowRect.top;
-
-  // Create the window using the class we registered
+  // Create the window using the STATIC class
   auto hwnd = CreateWindowExA(
     0                                             // dwExStyle
-  , windowClassSpecification.lpszClassName        // lpClassName
+  , "STATIC"                                      // lpClassName
   , nullptr                                       // lpWindowName
   , dwStyle                                       // dwStyle
-  // Advanced math to compute top left corner of window
-  , (GetSystemMetrics(SM_CXSCREEN) - width) >> 1  // nX
-  , (GetSystemMetrics(SM_CYSCREEN) - height) >> 1 // nY
-  , width                                         // nWidth
-  , height                                        // nHeight
+  , 0                                             // nX
+  , 0                                             // nY
+  , XRES                                          // nWidth
+  , YRES                                          // nHeight
   , nullptr                                       // hWndParent
   , nullptr                                       // hMenu
   , nullptr                                       // hInstance
@@ -217,6 +168,11 @@ int __cdecl main() {
       DispatchMessageA(&msg);
     }
 
+    // If ESCAPE is pressed we are done
+    if (GetAsyncKeyState(VK_ESCAPE)) {
+      done = 1;
+    }
+
     // Windows message handling done, let's draw some gfx
 
     // Get current wave position
@@ -236,6 +192,8 @@ int __cdecl main() {
     draw_demo(demoTime);
 
     if (currentSample == 0) {
+      // The first frame we copy right into the sound buffer
+      //  At 1920x1080 it's about 47 seconds of music
       glReadPixels(0, 0, XRES, YRES, GL_RED, GL_UNSIGNED_BYTE, waveBuffer);
     }
 

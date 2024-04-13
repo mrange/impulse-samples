@@ -35,35 +35,20 @@
 #include <GL/gl.h>
 #include "glext.h"
 
-#define SU_LENGTH_IN_SAMPLES  (1920*1080)
+#define XRES 1920
+#define YRES 1080
+
+#define SU_LENGTH_IN_SAMPLES  (XRES*YRES)
 #define SU_SAMPLE_RATE        44100
 #define SU_CHANNEL_COUNT      1
 #define SU_BUFFER_LENGTH      (SU_LENGTH_IN_SAMPLES*SU_CHANNEL_COUNT)
 
 using SUsample = char;
 
-#define XRES 1920
-#define YRES 1080
-
 extern "C" {
   #pragma bss_seg(".mainbss")
   int       _fltused;
   SUsample  waveBuffer[SU_BUFFER_LENGTH];
-
-  static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-  #pragma data_seg(".xres")
-  static int xres = XRES;
-  #pragma data_seg(".yres")
-  static int yres = YRES;
-
-  #pragma data_seg(".windowRect")
-  static RECT windowRect {
-    0
-  , 0
-  , XRES
-  , YRES
-  };
 
   #pragma data_seg(".pixelFormatDescriptor")
   static PIXELFORMATDESCRIPTOR pixelFormatSpecification {
@@ -93,20 +78,6 @@ extern "C" {
     , 0                                                       // dwLayerMask
     , 0                                                       // dwVisibleMask
     , 0                                                       // dwDamageMask
-  };
-
-  #pragma data_seg(".windowClassSpecification")
-  static WNDCLASSA windowClassSpecification {
-        CS_OWNDC | CS_HREDRAW | CS_VREDRAW  // style
-      , &WndProc                            // lpfnWndProc
-      , 0                                   // cbClsExtra
-      , 0                                   // cbWndExtra
-      , 0                                   // hInstance
-      , 0                                   // hIcon
-      , 0                                   // hCursor
-      , 0                                   // hbrBackground
-      , 0                                   // lpszMenuName
-      , "W4K"                               // lpszClassName
   };
 
   #pragma data_seg(".waveFormatSpecification")
