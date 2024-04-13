@@ -15,7 +15,7 @@
 */
 
 // #define PFD_HACK
-//#define WAVHDR_PREPARE_HACK
+#define WAVHDR_PREPARE_HACK
 #define NO_FPU
 
 //#define FULLSCREEN

@@ -140,7 +140,11 @@ extern "C" {
   , SU_BUFFER_LENGTH * sizeof(SUsample) // dwBufferLength
   , 0                                   // dwBytesRecorded
   , 0                                   // dwUser
+#ifdef WAVHDR_PREPARE_HACK
+  , WHDR_PREPARED                       // dwFlags
+#else
   , 0                                   // dwFlags
+#endif
   , 0                                   // dwLoops
   , 0                                   // lpNext
   , 0                                   // reserved
