@@ -15,8 +15,10 @@
 */
 
 // #define PFD_HACK
-#define WAVHDR_PREPARE_HACK
+//#define WAVHDR_PREPARE_HACK
 #define NO_FPU
+
+//#define FULLSCREEN
 
 #include "straight-from-the-book.h"
 
@@ -72,7 +74,7 @@ extern "C" {
 
 #pragma code_seg(".main")
 #ifdef USE_CRINKLER
-void entrypoint() {
+_declspec(naked) void entrypoint() {
 #else
 int __cdecl main() {
 #endif
@@ -225,7 +227,7 @@ int __cdecl main() {
 
 #ifndef WAVHDR_PREPARE_HACK
     push 0x20                                  // waveOutPrepareHeader.cbwh
-    push offset WaveHDR                        // waveOutPrepareHeader.pwh
+    push offset waveHeader                     // waveOutPrepareHeader.pwh
 #endif
 
     push esi                                   // waveOutOpen.fdwOpen
@@ -255,12 +257,13 @@ int __cdecl main() {
     push ATOM_STATIC                           // CreateWindowExA.lpClassName
     push esi                                   // CreateWindowExA.dwExStyle
 
+#ifdef FULLSCREEN
     push CDS_FULLSCREEN                        // ChangeDisplaySettingsA.dwFlags
     push offset devmode                        // ChangeDisplaySettingsA.lpDevMode
 
 
     call ChangeDisplaySettingsA
-
+#endif
     call CreateWindowExA
 
     push eax                                   // GetDC.hWnd
@@ -302,7 +305,7 @@ int __cdecl main() {
     call waveOutOpen
 
 #ifndef WAVHDR_PREPARE_HACK
-    push [hWaveOut]                            // waveOutPrepareHeader.hwo
+    push [hwo]                                 // waveOutPrepareHeader.hwo
 
     call waveOutPrepareHeader
 #endif
