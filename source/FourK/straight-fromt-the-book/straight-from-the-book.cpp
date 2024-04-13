@@ -18,7 +18,7 @@
 #define WAVHDR_PREPARE_HACK
 #define NO_FPU
 
-//#define FULLSCREEN
+#define FULLSCREEN
 
 #include "straight-from-the-book.h"
 
