@@ -1,5 +1,8 @@
 # Bonus: 1KiB Shader
 
+![The demo](../images/onek.jpg)
+
+
 In the demo "[Straight from the Book](https://demozoo.org/productions/338146/)," we generated the music within the shader and copied it into the audio buffer. The motivation behind this was that "t% funk" by [lhphr](https://www.youtube.com/@lhphr) relies on several functions not available in x86 assembler, making it difficult and size-intensive to reproduce the amazing sound.
 
 Instead, we produced the waveform within the shader from the very first frame and then copied it to the audio buffer. Another benefit of this approach is that the waveform is then available within the shader to perform additional cool effects.
