@@ -20,7 +20,7 @@
 // Required prelude
 
 // Set by draw_demo
-uniform vec4 state;
+uniform int sample;
 // The result of the shader
 out vec4 fcol;
 
@@ -30,52 +30,41 @@ out vec4 fcol;
 //  gl_FragCoord is the input fragment position
 //  fcol is the output fragment color
 
-// state.x  = time in seconds
-// state.yx = resolution
+mat2 rot(float a) {
+  return mat2(cos(a),sin(a),-sin(a),cos(a));
+}
 
 void main() {
-  vec4 gf   = gl_FragCoord;
-  // The shader time but also add the x coord to
-  //  make the time vary a bit on the x axis to
-  //  produce a wave form
-  float t   = state.x+1E-3*gf.x/state.y;
+  vec2 
+    resolution = vec2(1920, 1080)
+  , p = (-resolution+2*gl_FragCoord.xy)/resolution.yy
+  ;
 
-  // Music time for first frame, each pixel
-  //  will be a PCM sample in the sound buffer
-  float tm  = (gf.x+gf.y*state.y)/44100;
+  float 
+    musicTime = (sample==0?(gl_FragCoord.x+resolution.x*gl_FragCoord.y):(sample+.5*gl_FragCoord.x))*320/441
+  , kickTime  = musicTime/16384
+  , nkickTime = floor(kickTime)
+  , kick      = 1.-(kickTime-nkickTime)*1.6
+  , wave      = float((int(mod(musicTime,int(musicTime)&int(musicTime)>>12)/pow(2,mod(kickTime*16,4)-3))&127)+(int(pow(8e3,kick))&64)&255)/255
+  , l         = length(p)
+  ;
+  
+  vec3
+    col = vec3(0.)
+  , bcol =vec3(.125, .25, .5)
+  ;
+  
+  if (wave+abs(p.y) > 1) col.x += .25;
 
-  // If time is 0 we will compute the first audi frame
-  float time= state.x == 0 ? tm : t;
 
-  // --------------------------------------------------------------------------
-  // The Amazing 't% funk' by lhphr (found at https://bytebeat.demozoo.org/)
-  //  Ported to GLSL
-  float musicTime = 32E3*time;
-  float kickTime  = musicTime/16384;
-  float kick      = 1-(kickTime-floor(kickTime))*1.6;
-  float wave      =
-    float(
-        (int(mod(musicTime,float(int(musicTime)&int(musicTime)>>12))/pow(2.,mod(kickTime*16.,4.)-3.))&127)
-      + (int(pow(8e3,kick))&64
-      )&255)/255;
-  // --------------------------------------------------------------------------
+  p *= (1.5+.5*sin(-4*(l+kick)))*rot(-nkickTime+.5*l);
 
-  // y is in -1 to 1
-  float y   = -1+2*gf.y/state.z;
-  // Hack to produce a crummy wave from
-  float d   = abs(abs(y)-wave-.125);
-
-  // Palette generating function
-  vec3 pcol = 1+sin(vec3(0,1,2)+t);
-  // Compute the col for all frame but the first one
-  vec3 col  =
-      // The crummy wave form
-      pcol*1E-4/max(d*d, 1E-5)
-      // The kick
-    + kick*pcol.zxy*1E-1/max(abs(y), 1E-2)
-    ;
-
-  // If time is 0 we return the audio frame
-  //  otherwise "cool" graphics
-  fcol = vec4(state.x == 0 ? vec3(wave): sqrt(tanh(col)), 1);
+  for (int i = 10; i > 0; --i) {
+    ivec2 ip = ivec2(rot(-.1*kick*i)*p*12);
+    if (abs(ip.x^ip.y)%99%(43^int(nkickTime+20*-abs(p.x*p.y)*step(64,nkickTime)))<i)
+      col += bcol*exp(-.2*i);
+  }
+  col *= l*l;
+  col += .5*kick*kick/l*sqrt(bcol);
+  fcol = vec4(smoothstep(91, 89, kickTime)*(sample==0?vec3(wave):col), 1);
 }

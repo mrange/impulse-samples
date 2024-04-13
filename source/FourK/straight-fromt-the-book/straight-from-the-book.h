@@ -21,6 +21,8 @@
 #define WINDOWS_IGNORE_PACKING_MISMATCH
 #define SHADER_MINIFIER_IMPL
 
+#define ATOM_STATIC 0xC019
+
 #include "assert.h"
 
 #ifdef _DEBUG
@@ -35,8 +37,8 @@
 #include <GL/gl.h>
 #include "glext.h"
 
-#define XRES 1600
-#define YRES 900
+#define XRES 1920
+#define YRES 1080
 
 #define SU_LENGTH_IN_SAMPLES  (XRES*YRES)
 #define SU_SAMPLE_RATE        44100
@@ -45,13 +47,52 @@
 
 using SUsample = char;
 
+struct MINI_DEVMODE
+{
+  BYTE  _a[36];
+  DWORD dmSize;
+  DWORD dmFields;
+  struct
+  {
+    BYTE  _b[4];
+    DWORD pfdFlags;
+  }     pfd;
+  BYTE _c[56];
+  DWORD width;
+  DWORD height;
+  BYTE  _d[8];
+};
+
+
 extern "C" {
+#ifndef NO_FPU
+  #pragma data_seg("fcw")
+  WORD fcw = 0x0E7f;
   #pragma bss_seg(".mainbss")
   int       _fltused;
+#endif
+
+  #pragma bss_seg(".mainbss")
   SUsample  waveBuffer[SU_BUFFER_LENGTH];
+  GLint     fragmentShaderProgram;
+  HWAVEOUT  hwo;
+
+
+  #pragma data_seg(".devmode")
+  MINI_DEVMODE devmode = {
+    ""
+  , sizeof(devmode)
+  , DM_PELSWIDTH | DM_PELSHEIGHT
+  , ""
+  , PFD_DOUBLEBUFFER | PFD_SUPPORT_OPENGL
+  , ""
+  , XRES
+  , YRES
+  , ""
+  };
 
   #pragma data_seg(".pixelFormatDescriptor")
-  static PIXELFORMATDESCRIPTOR pixelFormatSpecification {
+  PIXELFORMATDESCRIPTOR pixelFormatSpecification {
       sizeof(PIXELFORMATDESCRIPTOR)                           // nSize
     , 1                                                       // nVersion
     , PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER  // dwFlags
@@ -113,19 +154,16 @@ extern "C" {
   };
 
   #pragma data_seg(".glCreateShaderProgramv")
-  static const char nm_glCreateShaderProgramv[] = "glCreateShaderProgramv";
+  const char nm_glCreateShaderProgramv[] = "glCreateShaderProgramv";
 
   #pragma data_seg(".glUseProgram")
-  static const char nm_glUseProgram[] = "glUseProgram";
+  const char nm_glUseProgram[] = "glUseProgram";
 
-  #pragma data_seg(".glUniform4f")
-  static const char nm_glUniform4f[] = "glUniform4f";
-
-  #pragma data_seg(".fragmentShaderProgram")
-  static GLint fragmentShaderProgram;
+  #pragma data_seg(".glUniform1i")
+  const char nm_glUniform1i[] = "glUniform1i";
 
   #pragma data_seg(".fragmentShaders")
-  static char const * fragmentShaders[] = {
+  char const * fragmentShaders[] = {
     #include "shader.inl"
   };
 

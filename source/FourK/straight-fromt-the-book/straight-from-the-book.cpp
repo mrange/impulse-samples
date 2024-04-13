@@ -14,6 +14,10 @@
   0. You just DO WHAT THE FUCK YOU WANT TO.
 */
 
+// #define PFD_HACK
+#define WAVHDR_PREPARE_HACK
+#define NO_FPU
+
 #include "straight-from-the-book.h"
 
 extern "C" {
@@ -55,17 +59,11 @@ extern "C" {
   }
 
   #pragma code_seg(".draw_demo")
-  __forceinline void draw_demo(float time) {
+  __forceinline void draw_demo(DWORD sample) {
     // Use the previously compiled shader program
     ((PFNGLUSEPROGRAMPROC)wglGetProcAddress(nm_glUseProgram))(fragmentShaderProgram);
     // Sets shader parameters
-    ((PFNGLUNIFORM4FPROC)wglGetProcAddress(nm_glUniform4f))(
-        0 // Uniform location
-      , time
-      , static_cast<GLfloat>(XRES)
-      , static_cast<GLfloat>(YRES)
-      , 0
-      );
+    ((PFNGLUNIFORM1IPROC)wglGetProcAddress(nm_glUniform1i))(0, sample);
     // Draws a rect over the entire window with fragment shader providing the gfx
     glRects(-1, -1, 1, 1);
   }
@@ -79,13 +77,14 @@ void entrypoint() {
 int __cdecl main() {
 #endif
 
+#if _DEBUG
   auto dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_POPUP;
 
   // Create the window using the STATIC class
   auto hwnd = CreateWindowExA(
     0                                             // dwExStyle
   // Special name for STATIC window class
-  , reinterpret_cast<LPCSTR>(0xC019)              // lpClassName
+  , reinterpret_cast<LPCSTR>(ATOM_STATIC)         // lpClassName
   , nullptr                                       // lpWindowName
   , dwStyle                                       // dwStyle
   , 0                                             // nX
@@ -131,7 +130,6 @@ int __cdecl main() {
 
   // Play the sound buffer
 
-  HWAVEOUT hwo;
   auto waveOpenOk = waveOutOpen(
     &hwo
   , WAVE_MAPPER
@@ -187,11 +185,8 @@ int __cdecl main() {
       done = 1;
     }
 
-    // Compute the demoTime from the current sample position
-    auto demoTime = currentSample/((float)SU_SAMPLE_RATE);
-
     // Draw the demo
-    draw_demo(demoTime);
+    draw_demo(currentSample);
 
     if (currentSample == 0) {
       // The shader computes the music as a it's first frame
@@ -213,6 +208,182 @@ int __cdecl main() {
   ExitProcess(0);
 #else
   return 0;
+#endif
+
+#else
+  _asm {
+#ifndef NO_FPU
+    fldcw[fcw]
+#endif
+
+    xor esi, esi
+
+    push esi                                   // ExitProcess.uExitCode
+
+    push 0x20                                  // waveOutWrite.cbwh
+    push offset waveHeader                     // waveOutWrite.pwh
+
+#ifndef WAVHDR_PREPARE_HACK
+    push 0x20                                  // waveOutPrepareHeader.cbwh
+    push offset WaveHDR                        // waveOutPrepareHeader.pwh
+#endif
+
+    push esi                                   // waveOutOpen.fdwOpen
+    push esi                                   // waveOutOpen.dwInstance
+    push esi                                   // waveOutOpen.dwCallback
+    push offset waveFormatSpecification        // waveOutOpen.pwfx
+    push - 1                                   // waveOutOpen.uDeviceID
+    push offset hwo                            // waveOutOpen.phwo
+
+    push offset fragmentShaders                // glCreateShaderProgram.strings
+    push 1                                     // glCreateShaderProgram.count
+    push GL_FRAGMENT_SHADER                    // glCreateShaderProgram.type
+    push offset nm_glCreateShaderProgramv      // wglGetProcAddress.procName
+
+    push esi                                   // ShowCursor.bShow
+
+    push esi                                   // CreateWindowExA.lpParam
+    push esi                                   // CreateWindowExA.hInstance
+    push esi                                   // CreateWindowExA.hMenu
+    push esi                                   // CreateWindowExA.hWndParent
+    push esi                                   // CreateWindowExA.nHeight
+    push esi                                   // CreateWindowExA.nWidth
+    push esi                                   // CreateWindowExA.Y
+    push esi                                   // CreateWindowExA.X
+    push WS_POPUP | WS_VISIBLE | WS_MAXIMIZE   // CreateWindowExA.dwStyle
+    push esi                                   // CreateWindowExA.lpWindowName
+    push ATOM_STATIC                           // CreateWindowExA.lpClassName
+    push esi                                   // CreateWindowExA.dwExStyle
+
+    push CDS_FULLSCREEN                        // ChangeDisplaySettingsA.dwFlags
+    push offset devmode                        // ChangeDisplaySettingsA.lpDevMode
+
+
+    call ChangeDisplaySettingsA
+
+    call CreateWindowExA
+
+    push eax                                   // GetDC.hWnd
+
+    call GetDC
+
+    mov edi, eax
+
+    push edi                                   // wglCreateContext.hdc
+    push esi                                   // SetPixelFormat.ppfd
+#ifdef PFD_HACK
+    push 8                                     // SetPixelFormat.format
+#else
+    push offset pixelFormatSpecification       // ChoosePixelFormat.ppfd
+    push edi                                   // ChoosePixelFormat.hdc
+
+    call ChoosePixelFormat
+
+    push eax                                   // SetPixelFormat.format
+#endif
+    push edi                                   // SetPixelFormat.hdc
+
+    call SetPixelFormat
+
+    call wglCreateContext
+
+    push eax                                   // wglMakeCurrent.glrc
+    push edi                                   // wglMakeCurrent.hdc
+
+    call wglMakeCurrent
+
+    call ShowCursor
+
+    call wglGetProcAddress
+
+    call eax                                   // glCreateShaderProgram (indirect call)
+    mov fragmentShaderProgram, eax
+
+    call waveOutOpen
+
+#ifndef WAVHDR_PREPARE_HACK
+    push [hWaveOut]                            // waveOutPrepareHeader.hwo
+
+    call waveOutPrepareHeader
+#endif
+    push [hwo]                                 // waveOutWrite.hwo
+
+    call waveOutWrite
+
+    mainloop:
+      push VK_ESCAPE                           // GetAsyncKeyState.vKey
+
+      push esi                                 // PeekMessage.wRemoveMsg
+      push esi                                 // PeekMessage.wMsgFilterMax
+      push esi                                 // PeekMessage.wMsgFilterMin
+      push esi                                 // PeekMessage.hWnd
+      push esi                                 // PeekMessage.lpMsg
+
+      push edi                                 // SwapBuffers.hdc
+
+      push 1                                   // glRects.y2
+      push 1                                   // glRects.x2
+      push -1                                  // glRects.y1
+      push -1                                  // glRects.x1
+
+      push 0xC                                 // waveOutGetPosition.cbmmt
+      push offset waveTime                     // waveOutGetPosition.pmmt
+      push [hwo]                               // waveOutGetPosition.hwo
+
+      call waveOutGetPosition
+
+      mov  ebx, dword ptr[waveTime.u.sample]
+
+      push            ebx                                 // glUniform1i.v0
+      push            esi                                 // glUniform1i.location
+
+      push            offset nm_glUniform1i               // wglGetProcAddress.procName
+
+      push            [fragmentShaderProgram]             // glUseProgram.pid
+
+      push            offset nm_glUseProgram              // wglGetProcAddress.procName
+
+      call            wglGetProcAddress
+
+      call            eax                                 // glUseProgram (indirect call)
+
+      call            wglGetProcAddress
+
+      call            eax                                 // glUniform1i (indirect call)
+
+      call            glRects
+
+      test            ebx, ebx
+      jnz             noread
+
+      push offset     waveBuffer               // glReadPixels.data
+      push            GL_UNSIGNED_BYTE         // glReadPixels.type
+      push            GL_RED                   // glReadPixels.format
+      push            YRES                     // glReadPixels.height
+      push            XRES                     // glReadPixels.width
+      push            esi                      // glReadPixels.y
+      push            esi                      // glReadPixels.x
+
+      call glReadPixels
+
+    noread:
+
+      call SwapBuffers
+
+      call PeekMessageA
+
+      call GetAsyncKeyState
+
+      test ax, ax
+      jne exit
+
+      cmp ebx, SU_LENGTH_IN_SAMPLES
+      jl mainloop
+
+  exit:
+
+    call ExitProcess
+  }
 #endif
 }
 
