@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fourk-win-demo", "fourk-win
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "onek-win-demo", "onek-win-demo\onek-win-demo.vcxproj", "{58F054BB-A7DF-4F9F-9DAF-6AC8919D230A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "straight-from-the-book", "straight-fromt-the-book\straight-from-the-book.vcxproj", "{F6680871-F0D2-4F1F-B972-311F89410827}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -26,6 +28,12 @@ Global
 		{58F054BB-A7DF-4F9F-9DAF-6AC8919D230A}.Release - CRINKLER|x86.Build.0 = Release - CRINKLER|Win32
 		{58F054BB-A7DF-4F9F-9DAF-6AC8919D230A}.Release|x86.ActiveCfg = Release|Win32
 		{58F054BB-A7DF-4F9F-9DAF-6AC8919D230A}.Release|x86.Build.0 = Release|Win32
+		{F6680871-F0D2-4F1F-B972-311F89410827}.Debug|x86.ActiveCfg = Debug|Win32
+		{F6680871-F0D2-4F1F-B972-311F89410827}.Debug|x86.Build.0 = Debug|Win32
+		{F6680871-F0D2-4F1F-B972-311F89410827}.Release - CRINKLER|x86.ActiveCfg = Release - CRINKLER|Win32
+		{F6680871-F0D2-4F1F-B972-311F89410827}.Release - CRINKLER|x86.Build.0 = Release - CRINKLER|Win32
+		{F6680871-F0D2-4F1F-B972-311F89410827}.Release|x86.ActiveCfg = Release|Win32
+		{F6680871-F0D2-4F1F-B972-311F89410827}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
