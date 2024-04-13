@@ -30,16 +30,24 @@ out vec4 fcol;
 //  gl_FragCoord is the input fragment position
 //  fcol is the output fragment color
 
-float getTime() {
-  return state.x;
-}
-
-vec2 getRes() {
-  return state.yz;
+vec3 music(float time) {
+  // The Amazing 't% funk' by lhphr (found at https://bytebeat.demozoo.org/)
+  float musicTime = 32000.*time;
+  float kickTime  = musicTime/16384.;
+  float nkickTime = floor(kickTime);
+  float kick      = 1.-(kickTime-nkickTime)*1.6;
+  float wave      = 
+    float(
+        (int(mod(musicTime,float(int(musicTime)&int(musicTime)>>12))/pow(2.,mod(kickTime*16.,4.)-3.))&127)
+      + (int(pow(8e3,kick))&64
+      )&255)/255.;
+  return vec3(wave, kick,nkickTime);
 }
 
 void main() {
-  vec3 col = vec3(1.0, 0.0, 0.25);
-
+  vec4 gf   = gl_FragCoord;
+  float t   = (gf.x+gf.y*state.y)/44100.;
+  vec3 m    = music(t);
+  vec3 col  = vec3(m.x);
   fcol = vec4(col, 1.0);
 }

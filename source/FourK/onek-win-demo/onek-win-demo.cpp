@@ -16,8 +16,6 @@
 
 #include "onek-win-demo.h"
 
-#include "math.h"
-
 extern "C" {
 
 #ifdef _DEBUG
@@ -38,7 +36,7 @@ extern "C" {
 #endif
 
   #pragma code_seg(".init_demo")
-  void init_demo() {
+  __forceinline void init_demo() {
     // Bit of debugging info during debug builds
     //  Don't want to waste bytes on that in Release mode
 #ifdef _DEBUG
@@ -57,7 +55,7 @@ extern "C" {
   }
 
   #pragma code_seg(".draw_demo")
-  void draw_demo(float time) {
+  __forceinline void draw_demo(float time) {
     // Use the previously compiled shader program
     ((PFNGLUSEPROGRAMPROC)wglGetProcAddress(nm_glUseProgram))(fragmentShaderProgram);
     // Sets shader parameters
@@ -180,15 +178,6 @@ int __cdecl main() {
 
   // Play the sound buffer
 
-  const double PI     = 3.141592654;
-  const double TAU    = 2 * PI;
-  const double ifreq  = 1. / SU_SAMPLE_RATE;
-  for (int i = 0; i < SU_LENGTH_IN_SAMPLES; ++i) {
-    auto t = i * ifreq;
-    auto w = 0.25*sin(t * 440 * TAU);
-    waveBuffer[i] = static_cast<char>(w * 127.+128);
-  }
-
   HWAVEOUT hwo;
   auto waveOpenOk = waveOutOpen(
     &hwo
@@ -245,6 +234,10 @@ int __cdecl main() {
 
     // Draw the demo
     draw_demo(demoTime);
+
+    if (currentSample == 0) {
+      glReadPixels(0, 0, XRES, YRES, GL_RED, GL_UNSIGNED_BYTE, waveBuffer);
+    }
 
     // Swap the buffers to present the gfx
     auto swapOk = SwapBuffers(hdc);
