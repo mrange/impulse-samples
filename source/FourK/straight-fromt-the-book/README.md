@@ -1,4 +1,4 @@
-# Bonus: Straight From The Book 1KiB Windows Demo
+# Bonus: Straight from the book 1KiB Windows Demo
 
 ![The demo](../images/sftb.jpg)
 
