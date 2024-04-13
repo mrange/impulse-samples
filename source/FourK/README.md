@@ -6,6 +6,8 @@ This is a demonstration showcasing the utilization of lesser-known tools availab
 
 I haven't divulged all the trade secrets I know, as I believe in leaving room for others to explore and discover the joy of these techniques.
 
+Bonus: [1KiB Demo](onek-win-demo/README.md)
+
 ## Code License: WTFPL
 
 Unless otherwise specified, all code is licensed under the [WTFPL](http://www.wtfpl.net/).

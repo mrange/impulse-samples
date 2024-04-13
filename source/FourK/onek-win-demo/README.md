@@ -1,4 +1,4 @@
-# Bonus: 1KiB Shader
+# Bonus: 1KiB Windows Demo Example
 
 ![The demo](../images/onek.jpg)
 
@@ -10,3 +10,5 @@ Instead, we produced the waveform within the shader from the very first frame an
 This example is not quite size-optimal and may have some glitches, but when compiled with Crinkler, the code size is reduced to 1011 bytes, qualifying it as a 1KiB demo.
 
 Special thanks to [lhphr](https://www.youtube.com/@lhphr) for sharing the amazing formula that generates the music.
+
+See [4KiB Windows Demo Example](../README.md) for info about tools used to make a really small executable.
