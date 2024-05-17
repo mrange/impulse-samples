@@ -35,8 +35,10 @@ extern "C" {
   char debugLog[0xFFFF];
 #endif
 
-  #pragma code_seg(".init_demo")
-  void init_demo() {
+  #pragma code_seg(".init_game")
+  void init_game() {
+    lcg_seed = GetTickCount();
+
     // Bit of debugging info during debug builds
     //  Don't want to waste bytes on that in Release mode
 #ifdef _DEBUG
@@ -54,8 +56,57 @@ extern "C" {
 #endif
   }
 
-  #pragma code_seg(".draw_demo")
-  void draw_demo(float time) {
+  #pragma code_seg(".lcg_rand_uint32")
+  uint32_t lcg_rand_uint32() {
+    lcg_seed = (1664525U * lcg_seed + 1013904223U);
+    return lcg_seed;
+  }
+
+  #pragma code_seg(".lcg_rand_float")
+  float lcg_rand_float() {
+    const double inv = 8./(1<<30);
+    double v = -1.+inv*lcg_rand_uint32();
+    return static_cast<float>(v);
+  }
+
+  #pragma code_seg(".reset_game")
+  void reset_game(float time) {
+    memset(&game, 0, sizeof(game));
+    game.game_state = game_state::playing;
+    game.start_time = time;
+    auto offy = 0;
+    for(auto y = 0; y < CELLS; ++y) {
+      for(auto x = 0; x < CELLS; ++x) {
+        auto off          = x + offy;
+        auto & cell       = game.cells[off];
+        auto rand         = lcg_rand_float();
+        cell.has_bomb     = rand < 0.1F;
+        cell.changed_time = time;
+        auto near_i       = 0;
+        auto near_offy    = offy-CELLS;
+        for (auto yy = -1; yy <= 1; ++yy) {
+          auto near_y     = y+yy;
+          for (auto xx = -1; xx <= 1; ++xx) {
+            auto near_x   = x+xx;
+            auto near_off = near_offy+x;
+            if (xx != yy && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
+              auto & near_cell        = game.cells[near_off];
+              assert(near_off >= 0.);
+              assert(near_off < CELLS*CELLS);
+              cell.near_cells[near_i] = &near_cell;
+              ++near_i;
+            }
+            assert(near_i < 8);
+          }
+          near_offy += CELLS;
+        }
+      }
+      offy += CELLS;
+    }
+  }
+
+  #pragma code_seg(".draw_game")
+  void draw_game(float time) {
     // Use the previously compiled shader program
     ((PFNGLUSEPROGRAMPROC)wglGetProcAddress(nm_glUseProgram))(fragmentShaderProgram);
     // Sets shader parameters
@@ -178,8 +229,8 @@ int __cdecl main() {
   auto makeOk = wglMakeCurrent(hdc, hglrc);
   assert(makeOk);
 
-  // Init our demo
-  init_demo();
+  // Init our game
+  init_game();
 
   // Now init the music.
   //  The way sointu works is that we call su_render_song which writes samples
@@ -250,23 +301,26 @@ int __cdecl main() {
       DispatchMessageA(&msg);
     }
 
+    auto time = GetTickCount() / 1000.F;
+    if (game.game_state == game_state::reset) {
+      // Resets the game state
+      reset_game(time);
+    }
+
     // Windows message handling done, let's draw some gfx
 
     // Get current wave position
     auto waveGetPosOk = waveOutGetPosition(hwo, &waveTime, sizeof(MMTIME));
     assert(waveGetPosOk == MMSYSERR_NOERROR);
 
-    // Have we passed the end sample? If so then we are done
+    // Have we passed the end sample? If so then restart music
     auto currentSample = waveTime.u.sample;
     if (currentSample >= SU_LENGTH_IN_SAMPLES) {
-      done = 1;
+      // TODO: Restart music
     }
 
-    // Compute the demoTime from the current sample position
-    auto demoTime = currentSample/((float)SU_SAMPLE_RATE);
-
-    // Draw the demo
-    draw_demo(demoTime);
+    // Draw the game
+    draw_game(time);
 
     // Swap the buffers to present the gfx
     auto swapOk = SwapBuffers(hdc);

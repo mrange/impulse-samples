@@ -21,6 +21,15 @@
 #define WINDOWS_IGNORE_PACKING_MISMATCH
 #define SHADER_MINIFIER_IMPL
 
+#define LCG_A 1664525
+#define LCG_C 1013904223
+#define LCG_M 4294967296 // 2^32
+
+#define XRES  1600
+#define YRES  900
+
+#define CELLS 12
+
 #include "assert.h"
 
 #ifdef _DEBUG
@@ -38,13 +47,41 @@
 #include "uglyverse.h"
 
 
-#define XRES 1600
-#define YRES 900
+enum class cell_state {
+  covered_empty = 0
+, covered_flag
+, uncovering
+, exploding
+, exploded
+, uncovered
+};
+
+struct cell {
+  float       changed_time;
+  cell_state  state;
+  cell_state  next_state;
+
+  bool        has_bomb;
+  cell*       near_cells[8];
+};
+
+enum class game_state {
+  reset     = 0
+, playing
+};
+
+struct game {
+  float       start_time;
+  game_state  game_state;
+  cell        cells[CELLS*CELLS];
+};
 
 extern "C" {
   #pragma bss_seg(".mainbss")
-  int       _fltused;
-  SUsample  waveBuffer[SU_BUFFER_LENGTH];
+  int                 _fltused                    ;
+  uint32_t            lcg_seed                    ;
+  struct game         game                        ;
+  SUsample            waveBuffer[SU_BUFFER_LENGTH];
 
   static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
