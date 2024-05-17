@@ -170,9 +170,9 @@
       <AdditionalInputs>$(ProjectDir)uglyverse.h</AdditionalInputs>
       <LinkObjects>true</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="shader.fx">
+    <CustomBuild Include="shader.frag">
       <FileType>Text</FileType>
-      <Command>$(SolutionDir)shader_minifier.exe "$(ProjectDir)shader.fx" --format c-array -o "$(ProjectDir)shader.inl"</Command>
+      <Command>$(SolutionDir)shader_minifier.exe "$(ProjectDir)shader.frag" --format c-array -o "$(ProjectDir)shader.inl"</Command>
       <Message>Minifying cool gfx...</Message>
       <Outputs>$(ProjectDir)shader.inl</Outputs>
     </CustomBuild>

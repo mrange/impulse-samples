@@ -44,6 +44,7 @@ float box(vec2 p, vec2 b) {
 }
 
 void main() {
+  // Test
   vec2 q = gl_FragCoord.xy/state.yz;
   vec2 p = -1. + 2. * q;
   p.x *= state.y/state.z;
