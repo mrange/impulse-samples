@@ -64,8 +64,10 @@ extern "C" {
 
   #pragma code_seg(".lcg_rand_float")
   float lcg_rand_float() {
-    const double inv = 8./(1<<30);
-    double v = -1.+inv*lcg_rand_uint32();
+    const double inv = 0.25/(1<<30);
+    double v = inv*lcg_rand_uint32();
+    assert(v >= 0.);
+    assert(v <= 1.);
     return static_cast<float>(v);
   }
 
@@ -74,48 +76,77 @@ extern "C" {
     memset(&game, 0, sizeof(game));
     game.game_state = game_state::playing;
     game.start_time = time;
-    auto offy = 0;
+
+    auto total_bombs  = 0;
+    auto offy         = 0;
+
     for(auto y = 0; y < CELLS; ++y) {
       for(auto x = 0; x < CELLS; ++x) {
         auto off          = x + offy;
         auto & cell       = game.cells[off];
         auto rand         = lcg_rand_float();
-        cell.has_bomb     = rand < 0.1F;
-        cell.changed_time = time;
-        auto near_i       = 0;
-        auto near_offy    = offy-CELLS;
-        for (auto yy = -1; yy <= 1; ++yy) {
-          auto near_y     = y+yy;
-          for (auto xx = -1; xx <= 1; ++xx) {
-            auto near_x   = x+xx;
-            auto near_off = near_offy+x;
-            if (xx != yy && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
-              auto & near_cell        = game.cells[near_off];
-              assert(near_off >= 0.);
-              assert(near_off < CELLS*CELLS);
-              cell.near_cells[near_i] = &near_cell;
-              ++near_i;
-            }
-            assert(near_i < 8);
-          }
-          near_offy += CELLS;
+        cell.x            = x;
+        cell.y            = y;
+        if (rand < 0.1F) {
+          cell.has_bomb   = true;
+          ++total_bombs;
         }
+        cell.changed_time = time;
       }
       offy += CELLS;
+    }
+    game.total_bombs = total_bombs;
+
+    for(auto i = 0; i < CELLS*CELLS; ++i) {
+      auto & cell = game.cells[i];
+      auto near_bombs   = 0;
+      auto near_i       = 0;
+      for (auto yy = -1; yy <= 1; ++yy) {
+        auto near_y     = cell.y+yy;
+        for (auto xx = -1; xx <= 1; ++xx) {
+          auto near_x   = cell.x+xx;
+          auto near_off = near_y*CELLS+near_x;
+          if (xx != yy && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
+            auto & near_cell        = game.cells[near_off];
+            assert(near_off >= 0);
+            assert(near_off < CELLS*CELLS);
+            cell.near_cells[near_i] = &near_cell;
+            ++near_i;
+            if (near_cell.has_bomb) ++near_bombs;
+          }
+          assert(near_i < 8);
+        }
+      }
+      cell.near_bombs = near_bombs;
     }
   }
 
   #pragma code_seg(".draw_game")
   void draw_game(float time) {
+    const int size = sizeof(state)/sizeof(GLfloat);
+    // Setup state
+    GLfloat* s  = state;
+    s[0]        = time-game.start_time;
+    s[1]        = static_cast<GLfloat>(xres);
+    s[2]        = static_cast<GLfloat>(yres);
+    //  Jump to first cell
+    s           = state+4*STATE_SIZE;
+    // Setup cells
+    for(auto i = 0; i < CELLS*CELLS; ++i) {
+      auto & cell = game.cells[i];
+
+      s[0] = static_cast<GLfloat>(-cell.near_bombs);
+      s[1] = cell.changed_time;
+      s += 4;
+    }
+
     // Use the previously compiled shader program
     ((PFNGLUSEPROGRAMPROC)wglGetProcAddress(nm_glUseProgram))(fragmentShaderProgram);
     // Sets shader parameters
-    ((PFNGLUNIFORM4FPROC)wglGetProcAddress(nm_glUniform4f))(
+    ((PFNGLUNIFORM4FVPROC)wglGetProcAddress(nm_glUniform4fv))(
         0 // Uniform location
-      , time
-      , static_cast<GLfloat>(xres)
-      , static_cast<GLfloat>(yres)
-      , 0
+      , size
+      , state
       );
     // Draws a rect over the entire window with fragment shader providing the gfx
     glRects(-1, -1, 1, 1);

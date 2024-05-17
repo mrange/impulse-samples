@@ -21,14 +21,15 @@
 #define WINDOWS_IGNORE_PACKING_MISMATCH
 #define SHADER_MINIFIER_IMPL
 
-#define LCG_A 1664525
-#define LCG_C 1013904223
-#define LCG_M 4294967296 // 2^32
+#define LCG_A       1664525
+#define LCG_C       1013904223
+//#define LCG_M       4294967296 // 2^32
 
-#define XRES  1600
-#define YRES  900
+#define XRES        1600
+#define YRES        900
 
-#define CELLS 12
+#define CELLS       12
+#define STATE_SIZE  2
 
 #include "assert.h"
 
@@ -57,11 +58,15 @@ enum class cell_state {
 };
 
 struct cell {
+  int         x;
+  int         y;
+  bool        has_bomb;
+  int         near_bombs;
+
   float       changed_time;
   cell_state  state;
   cell_state  next_state;
 
-  bool        has_bomb;
   cell*       near_cells[8];
 };
 
@@ -72,16 +77,19 @@ enum class game_state {
 
 struct game {
   float       start_time;
+  int         total_bombs;
+  int         total_revealed;
   game_state  game_state;
   cell        cells[CELLS*CELLS];
 };
 
 extern "C" {
   #pragma bss_seg(".mainbss")
-  int                 _fltused                    ;
-  uint32_t            lcg_seed                    ;
-  struct game         game                        ;
-  SUsample            waveBuffer[SU_BUFFER_LENGTH];
+  int                 _fltused                      ;
+  uint32_t            lcg_seed                      ;
+  struct game         game                          ;
+  GLfloat             state[CELLS*CELLS+STATE_SIZE] ;
+  SUsample            waveBuffer[SU_BUFFER_LENGTH]  ;
 
   static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -180,8 +188,8 @@ extern "C" {
   #pragma data_seg(".glUseProgram")
   static const char nm_glUseProgram[] = "glUseProgram";
 
-  #pragma data_seg(".glUniform4f")
-  static const char nm_glUniform4f[] = "glUniform4f";
+  #pragma data_seg(".glUniform4fv")
+  static const char nm_glUniform4fv[] = "glUniform4fv";
 
   #pragma data_seg(".fragmentShaderProgram")
   static GLint fragmentShaderProgram;
