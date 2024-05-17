@@ -20,9 +20,9 @@
 // Required prelude
 
 // Set by draw_demo
-uniform vec4 state;
+layout(location=0) uniform vec4 state;
 // The result of the shader
-out vec4 fcol;
+layout(location=0) out vec4 fcol;
 
 // ----------------------------------------------------------------------------
 // The Shader
