@@ -8,7 +8,7 @@
 
 #else // if SHADER_MINIFIER_IMPL
 
-// C:\code\github\impulse-samples\source\FourK\fourk-win-demo\shader.fx
+// C:\code\github\impulse-samples\source\FourK\minesweeper\shader.fx
 "#version 430\n"
  "uniform vec4 v;"
  "out vec4 f;"
