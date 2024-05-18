@@ -334,9 +334,10 @@ void entrypoint() {
 #else
 int __cdecl main() {
 #endif
+/*
   auto dpiAware = SetProcessDPIAware();
   assert(dpiAware);
-
+*/
   auto hinstance    = GetModuleHandle(0);
   assert(hinstance);
 

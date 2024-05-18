@@ -176,7 +176,7 @@ void main() {
     , aa  = sqrt(2) / res.y
     , caa = aa/cz
     , taa = aa/tz
-    , faa = aa/fz
+    , faa = aa/(fz*cz)
     ;
 
   mp.y     = -mp.y;
