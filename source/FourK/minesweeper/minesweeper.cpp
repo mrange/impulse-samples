@@ -86,8 +86,8 @@ extern "C" {
     auto total_bombs  = 0;
     auto offy         = 0;
 
-    for(auto y = 0; y < CELLS; ++y) {
-      for(auto x = 0; x < CELLS; ++x) {
+    for (auto y = 0; y < CELLS; ++y) {
+      for (auto x = 0; x < CELLS; ++x) {
         auto off          = x + offy;
         auto & cell       = game.cells[off];
         auto rand         = lcg_rand_float();
@@ -105,8 +105,7 @@ extern "C" {
     }
     game.total_bombs = total_bombs;
 
-    for(auto i = 0; i < CELLS*CELLS; ++i) {
-      auto & cell = game.cells[i];
+    for (auto & cell : game.cells) {
       auto near_bombs   = 0;
       auto near_i       = 0;
       for (auto yy = -1; yy <= 1; ++yy) {
@@ -114,7 +113,8 @@ extern "C" {
         for (auto xx = -1; xx <= 1; ++xx) {
           auto near_x   = cell.x+xx;
           auto near_off = near_y*CELLS+near_x;
-          if (xx != yy && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
+          auto hit_mid = xx == 0 && yy == 0;
+          if (!hit_mid && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
             auto & near_cell        = game.cells[near_off];
             assert(near_off >= 0);
             assert(near_off < CELLS*CELLS);
@@ -122,7 +122,7 @@ extern "C" {
             ++near_i;
             if (near_cell.has_bomb) ++near_bombs;
           }
-          assert(near_i < 8);
+          assert(near_i <= 8);
         }
       }
       cell.near_bombs = near_bombs;
@@ -172,15 +172,96 @@ extern "C" {
       assert(ci >= 0 && ci < CELLS*CELLS);
       auto & cell = game.cells[ci];
       cell.mouse_time = g_t;
+
+      if (cell.state == cell.next_state && game.game_state == game_state::playing) {
+        // React on mouse click if state is up to date and we are playing
+
+        if (mouse_left_button == 0 && mouse_left_button_previous == 1) {
+          // Left button released
+          switch (cell.state) {
+            case cell_state::covered_empty:
+            case cell_state::covered_flag:
+              cell.state = cell.next_state = cell_state::uncovering;
+              cell.changed_time = g_t;
+              break;
+          }
+        }
+
+        if (mouse_right_button == 0 && mouse_right_button_previous == 1) {
+          // Right button released
+          switch (cell.state) {
+            case cell_state::covered_empty:
+            case cell_state::covered_flag:
+              // Toggle flag tile
+              cell.state = cell.next_state = cell.state == cell_state::covered_empty 
+                ? cell_state::covered_flag
+                : cell_state::covered_empty
+                ;
+              cell.changed_time = g_t;
+              break;
+          }
+        }
+      }
     }
 
+    if (g_t >= next_state_advance) {
+      next_state_advance = g_t + STATE_SLEEP;
+
+      for (auto & cell : game.cells) {
+        switch (cell.state) {
+          case cell_state::uncovering:
+            if (cell.has_bomb) {
+              cell.next_state = cell_state::exploding;
+              game.game_state = game_state::game_over;
+            } else {
+              cell.next_state = cell_state::uncovered;
+              if (cell.near_bombs == 0) {
+                for(auto near_cell : cell.near_cells) {
+                  if (near_cell) {
+                    switch(near_cell->state) {
+                      case cell_state::covered_empty:
+                      case cell_state::covered_flag:
+                        near_cell->next_state = cell_state::uncovering;
+                        break;
+                    }
+                  }
+                }
+              }
+            }
+            break;
+          case cell_state::exploding:
+            cell.next_state = cell_state::exploded;
+            for(auto near_cell : cell.near_cells) {
+              if (near_cell) {
+                switch(near_cell->state) {
+                  case cell_state::exploding:
+                  case cell_state::exploded:
+                    break;
+                  default:
+                    near_cell->next_state = cell_state::exploding;
+                    break;
+                }
+              }
+            }
+            break;
+        }
+      }
+
+      for (auto & cell : game.cells) {
+        if (cell.state != cell.next_state) {
+          cell.state        = cell.next_state;
+          cell.changed_time = g_t;
+        }
+      }
+    }
+
+    mouse_left_button_previous  = mouse_left_button;
+    mouse_right_button_previous = mouse_right_button;
 
     //  Jump to first cell
     s           = state+4*STATE_SIZE;
     // Setup cells
-    for(auto i = 0; i < CELLS*CELLS; ++i) {
-      auto & cell = game.cells[i];
-
+    for (auto & cell : game.cells) {
       s[0] = cell.state != cell_state::uncovered ? static_cast<GLfloat>(cell.state) : static_cast<GLfloat>(-cell.near_bombs);
       s[1] = cell.changed_time;
       s[2] = cell.mouse_time;
@@ -200,9 +281,8 @@ extern "C" {
   }
 
   #pragma code_seg(".WndProc")
-  LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-  {
-    switch(uMsg) {
+  LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
       // To be ignored
       case WM_SYSCOMMAND:
         if (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER) 
@@ -221,16 +301,12 @@ extern "C" {
         break;
       // Capture mouse buttons
       case WM_LBUTTONDOWN:
-        mouse_left_button = 1;
-        break;
       case WM_LBUTTONUP:
-        mouse_left_button = 0;
+        mouse_left_button = uMsg == WM_LBUTTONDOWN;
         break;
       case WM_RBUTTONDOWN:
-        mouse_right_button = 1;
-        break;
       case WM_RBUTTONUP:
-        mouse_right_button = 0;
+        mouse_right_button = uMsg == WM_RBUTTONDOWN;
         break;
       // It's time to stop!
       case WM_CLOSE:
@@ -258,6 +334,9 @@ void entrypoint() {
 #else
 int __cdecl main() {
 #endif
+  auto dpiAware = SetProcessDPIAware();
+  assert(dpiAware);
+
   auto hinstance    = GetModuleHandle(0);
   assert(hinstance);
 

@@ -33,9 +33,9 @@
 
 #define CELLS       12
 #define STATE_SIZE  2
-#define BORDER_DIM  .9F
-#define CELL_DIM    (BORDER_DIM/(CELLS*.5F))
-
+#define BORDER_DIM  0.9F
+#define CELL_DIM    (BORDER_DIM/(CELLS*0.5F))
+#define STATE_SLEEP 0.1F
 
 #include "assert.h"
 
@@ -80,6 +80,7 @@ struct cell {
 enum class game_state {
   reset     = 0
 , playing   = 1
+, game_over = 2
 };
 
 struct game {
@@ -95,6 +96,7 @@ extern "C" {
   #pragma bss_seg(".mainbss")
   int                 _fltused                      ;
   uint32_t            lcg_state                     ;
+  float               next_state_advance            ;
   int                 mouse_x                       ;
   int                 mouse_y                       ;
   int                 mouse_left_button_previous    ;
