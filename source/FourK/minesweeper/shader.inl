@@ -22,7 +22,7 @@
  "}\n"
  "#define HSV2RGB(c)(c.z*mix((vec4(3,2,1,9)/3).xxx,clamp(abs(fract(c.xxx+(vec4(3,2,1,9)/3).xyz)*6.0-(vec4(3,2,1,9)/3).www)-(vec4(3,2,1,9)/3).xxx,0.0,1.0),c.y))\n"
  "#define HSV2RGBT(c)vec4(HSV2RGB(c.xyz),c.w)\n"
- "const vec4[5] i=vec4[5](HSV2RGBT(vec4(.55,.7,1,.125)),HSV2RGBT(vec4(.4,.7,1,.5)),HSV2RGBT(vec4(0,0,1,1)),HSV2RGBT(vec4(0,.8,1,1)),HSV2RGBT(vec4(0,.8,.25,.5)));"
+ "const vec4[6] i=vec4[6](HSV2RGBT(vec4(0)),HSV2RGBT(vec4(.55,.7,1,.125)),HSV2RGBT(vec4(.4,.7,1,.5)),HSV2RGBT(vec4(0,0,1,1)),HSV2RGBT(vec4(0,.8,1,1)),HSV2RGBT(vec4(0,.8,.25,.5)));"
  "vec2 t(inout vec2 v)"
  "{"
    "vec2 c=vec2(.075,.1),H=floor((v+c*.5)/c);"

@@ -69,7 +69,7 @@ const int[16] ddigits = int[16](
   , 0x2B // F  
   ); 
 // License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
-const vec4 hsv2rgb_K = vec4(3,2,1,9)/3;
+const vec4 hsv2rgb_K = (vec4(3,2,1,9)/3);
 
 // License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
 vec3 hsv2rgb(vec3 c) {
@@ -81,13 +81,13 @@ vec3 hsv2rgb(vec3 c) {
 #define HSV2RGB(c)  (c.z * mix((vec4(3,2,1,9)/3).xxx, clamp(abs(fract(c.xxx + (vec4(3,2,1,9)/3).xyz) * 6.0 - (vec4(3,2,1,9)/3).www) - (vec4(3,2,1,9)/3).xxx, 0.0, 1.0), c.y))
 #define HSV2RGBT(c) vec4(HSV2RGB(c.xyz), c.w) 
 
-const vec4[5] stateCol = vec4[5](
-    HSV2RGBT(vec4(0.55, 0.7, 1.0  , 0.125)) // covered_empty
-  , HSV2RGBT(vec4(0.40, 0.7, 1.0  , 0.5)) // covered_flag 
-  , HSV2RGBT(vec4(0.00, 0.0, 1.0  , 1.)) // uncovering   
-  , HSV2RGBT(vec4(0.00, 0.8, 1.0  , 1.)) // exploding    
-  , HSV2RGBT(vec4(0.00, 0.8, 0.25 , 0.5))// exploded     
-// Not happening, render as number instead  , // uncovered    
+const vec4[6] stateCol = vec4[6](
+    HSV2RGBT(vec4(0.0 , 0.0, 0.0  , 0.))    // covered_empty
+  , HSV2RGBT(vec4(0.55, 0.7, 1.0  , 0.125)) // covered_empty
+  , HSV2RGBT(vec4(0.40, 0.7, 1.0  , 0.5))   // covered_flag 
+  , HSV2RGBT(vec4(0.00, 0.0, 1.0  , 1.))    // uncovering   
+  , HSV2RGBT(vec4(0.00, 0.8, 1.0  , 1.))    // exploding    
+  , HSV2RGBT(vec4(0.00, 0.8, 0.25 , 0.5))   // exploded     
   );
 
 
@@ -115,7 +115,7 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
 
   vec2 
       ap = abs(p)
-    , cp = p-0.5
+    , cp = p-.5
     , cn = round(cp)
     , p0 = p
     , p1 = p

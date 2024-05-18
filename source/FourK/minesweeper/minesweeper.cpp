@@ -93,6 +93,8 @@ extern "C" {
         auto rand         = lcg_rand_float();
         cell.x            = x;
         cell.y            = y;
+        cell.state        = cell_state::covered_empty;
+        cell.next_state   = cell_state::covered_empty;
         if (rand < 0.1F) {
           cell.has_bomb   = true;
           ++total_bombs;
@@ -166,7 +168,8 @@ extern "C" {
 
     auto ci      = static_cast<int>(mnp_x+mnp_y*CELLS);
 
-    if (ci >= 0 && ci < CELLS*CELLS) {
+    if (mnp_x >= 0 && mnp_x < CELLS && mnp_y >= 0 && mnp_y < CELLS) {
+      assert(ci >= 0 && ci < CELLS*CELLS);
       auto & cell = game.cells[ci];
       cell.mouse_time = g_t;
     }
@@ -178,7 +181,7 @@ extern "C" {
     for(auto i = 0; i < CELLS*CELLS; ++i) {
       auto & cell = game.cells[i];
 
-      s[0] = static_cast<GLfloat>(-cell.near_bombs);
+      s[0] = cell.state != cell_state::uncovered ? static_cast<GLfloat>(cell.state) : static_cast<GLfloat>(-cell.near_bombs);
       s[1] = cell.changed_time;
       s[2] = cell.mouse_time;
       s += 4;
@@ -199,35 +202,49 @@ extern "C" {
   #pragma code_seg(".WndProc")
   LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   {
-    // Let's ignore these
-    if (uMsg == WM_SYSCOMMAND && (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER))
-      return 0;
-
-    // It's time to stop!
-    if (uMsg == WM_CLOSE || uMsg == WM_DESTROY || (uMsg == WM_KEYDOWN && wParam == VK_ESCAPE)) {
-      PostQuitMessage(0);
-      return 0;
-    }
-
-    // Mouse moved
-    if (uMsg == WM_MOUSEMOVE) {
-      mouse_x = GET_X_LPARAM(lParam);
-      mouse_y = GET_Y_LPARAM(lParam);
-    }
-
-    // Resized the window? No problem!
-    if (uMsg == WM_SIZE) {
-      res_x = LOWORD(lParam);
-      res_y = HIWORD(lParam);
-      glViewport(0, 0, res_x, res_y);
-    }
-
-    // Another way to stop!
-    if (uMsg == WM_CHAR || uMsg == WM_KEYDOWN) {
-      if (wParam == VK_ESCAPE) {
+    switch(uMsg) {
+      // To be ignored
+      case WM_SYSCOMMAND:
+        if (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER) 
+          return 0;
+        break;
+      // Mouse moved
+      case WM_MOUSEMOVE:
+        mouse_x = GET_X_LPARAM(lParam);
+        mouse_y = GET_Y_LPARAM(lParam);
+        break;
+      // Resized the window? No problem!
+      case WM_SIZE:
+        res_x = LOWORD(lParam);
+        res_y = HIWORD(lParam);
+        glViewport(0, 0, res_x, res_y);
+        break;
+      // Capture mouse buttons
+      case WM_LBUTTONDOWN:
+        mouse_left_button = 1;
+        break;
+      case WM_LBUTTONUP:
+        mouse_left_button = 0;
+        break;
+      case WM_RBUTTONDOWN:
+        mouse_right_button = 1;
+        break;
+      case WM_RBUTTONUP:
+        mouse_right_button = 0;
+        break;
+      // It's time to stop!
+      case WM_CLOSE:
+      case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
-      }
+      case WM_CHAR:
+      case WM_KEYDOWN:
+        // Done on Escape
+        if (wParam == VK_ESCAPE) {
+          PostQuitMessage(0);
+          return 0;
+        }
+        break;
     }
 
     // Apply default window message handling
@@ -241,16 +258,20 @@ void entrypoint() {
 #else
 int __cdecl main() {
 #endif
-  auto hinstance = GetModuleHandle(0);
+  auto hinstance    = GetModuleHandle(0);
   assert(hinstance);
 
   // Sets up a Rebecca purple brush that will be visible if the shader fails for some reason
-  auto hbackground = CreateSolidBrush(RGB(0x66, 0x33, 0x99));
+  auto hbackground  = CreateSolidBrush(RGB(0x66, 0x33, 0x99));
   assert(hbackground);
 
+  // Use default arrow cursor
+  auto hcursor      = LoadCursor(nullptr, IDC_ARROW);
+
   // Setups the windows class
-  windowClassSpecification.hInstance      = hinstance;
-  windowClassSpecification.hbrBackground  = hbackground;
+  windowClassSpecification.hInstance      = hinstance   ;
+  windowClassSpecification.hbrBackground  = hbackground ;
+  windowClassSpecification.hCursor        = hcursor     ;
 
   // Registers the windows class
   auto regOk = RegisterClassA(&windowClassSpecification);

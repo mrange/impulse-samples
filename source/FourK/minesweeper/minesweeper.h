@@ -95,8 +95,12 @@ extern "C" {
   #pragma bss_seg(".mainbss")
   int                 _fltused                      ;
   uint32_t            lcg_state                     ;
-  int                 mouse_x;
-  int                 mouse_y;
+  int                 mouse_x                       ;
+  int                 mouse_y                       ;
+  int                 mouse_left_button_previous    ;
+  int                 mouse_left_button             ;
+  int                 mouse_right_button_previous   ;
+  int                 mouse_right_button            ;
   struct game         game                          ;
   GLfloat             state[CELLS*CELLS+STATE_SIZE] ;
   SUsample            waveBuffer[SU_BUFFER_LENGTH]  ;
