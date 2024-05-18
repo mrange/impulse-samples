@@ -56,11 +56,11 @@
 
 enum class cell_state {
   covered_empty = 0
-, covered_flag
-, uncovering
-, exploding
-, exploded
-, uncovered
+, covered_flag  = 1
+, uncovering    = 2
+, exploding     = 3
+, exploded      = 4
+, uncovered     = 5
 };
 
 struct cell {
@@ -79,7 +79,7 @@ struct cell {
 
 enum class game_state {
   reset     = 0
-, playing
+, playing   = 1
 };
 
 struct game {
