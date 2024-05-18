@@ -55,12 +55,12 @@
 
 
 enum class cell_state {
-  covered_empty = 0
-, covered_flag  = 1
-, uncovering    = 2
-, exploding     = 3
-, exploded      = 4
-, uncovered     = 5
+  uncovered     = 0
+, covered_empty = 1
+, covered_flag  = 2
+, uncovering    = 3
+, exploding     = 4
+, exploded      = 5
 };
 
 struct cell {

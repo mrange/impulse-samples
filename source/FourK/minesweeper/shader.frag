@@ -66,16 +66,30 @@ const int[16] ddigits = int[16](
   , 0x2D // C
   , 0x5E // D
   , 0x2F // E
-  , 0x2B // F
+  , 0x2B // F  
   ); 
-
 // License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
 const vec4 hsv2rgb_K = vec4(3,2,1,9)/3;
 
+// License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
 vec3 hsv2rgb(vec3 c) {
   vec3 p = abs(fract(c.xxx + hsv2rgb_K.xyz) * 6 - hsv2rgb_K.www);
   return c.z * mix(hsv2rgb_K.xxx, clamp(p - hsv2rgb_K.xxx, 0, 1), c.y);
 }
+// License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
+//  Macro version of above to enable compile-time constants
+#define HSV2RGB(c)  (c.z * mix((vec4(3,2,1,9)/3).xxx, clamp(abs(fract(c.xxx + (vec4(3,2,1,9)/3).xyz) * 6.0 - (vec4(3,2,1,9)/3).www) - (vec4(3,2,1,9)/3).xxx, 0.0, 1.0), c.y))
+#define HSV2RGBT(c) vec4(HSV2RGB(c.xyz), c.w) 
+
+const vec4[5] stateCol = vec4[5](
+    HSV2RGBT(vec4(0.55, 0.7, 1.0  , 0.125)) // covered_empty
+  , HSV2RGBT(vec4(0.40, 0.7, 1.0  , 0.5)) // covered_flag 
+  , HSV2RGBT(vec4(0.00, 0.0, 1.0  , 1.)) // uncovering   
+  , HSV2RGBT(vec4(0.00, 0.8, 1.0  , 1.)) // exploding    
+  , HSV2RGBT(vec4(0.00, 0.8, 0.25 , 0.5))// exploded     
+// Not happening, render as number instead  , // uncovered    
+  );
+
 
 // License: MIT OR CC-BY-NC-4.0, author: mercury, found: https://mercury.sexy/hg_sdf/
 vec2 mod2(inout vec2 p, vec2 size) {
@@ -98,6 +112,7 @@ float dsegmentx(vec2 p, vec2 dim) {
 }
 
 vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
+
   vec2 
       ap = abs(p)
     , cp = p-0.5
@@ -130,7 +145,7 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
     , sx  = .5*(n1.x+1) + n1.y+1
     , sy  = -n0
     , s   = d2 > 0 ? (3+sx) : sy
-    , m = mod(floor(n), 16)
+    , m   = floor(n)
     ;
 
   int digit = ddigits[int(m)];
@@ -182,7 +197,7 @@ void main() {
 
   tcp /= tz;
 
-  int ci = clamp(int((np.x)+(np.y)*CELLS+STATE_SIZE), 2, state.length()-1);
+  int ci = int((np.x)+(np.y)*CELLS+STATE_SIZE);
   vec4 c = state[ci];
 
   float 
@@ -194,15 +209,18 @@ void main() {
 
   if (d0 < 0.) {
     col += hsv2rgb(vec3(.55, .5, 2E-3))*(1./max(dot(cp, cp)+smoothstep(mts+.125, mts+3., tm), 1E-3)); 
-    d1 = abs(d1)-.0125;
     vec2 fcp = cp/fz;
-    if (cs < 0.) {
+    if (cs < 0) {
       vec3 
           acol = hsv2rgb(vec3(.3+.3*cs/9, .5, 1.))
         , icol = acol*.1
         ;
       col = digit(col, fcp, acol, icol, faa, -cs, 1);
+    } else {
+      vec4 scol = stateCol[int(cs)]; 
+      col = mix(col, scol.xyz, smoothstep(caa, -caa, d1)*scol.w);      
     }
+    d1 = abs(d1)-.0125;
     col = mix(col, vec3(1), smoothstep(caa, -caa, d1));
   }
 
