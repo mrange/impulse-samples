@@ -28,8 +28,14 @@
 #define XRES        1600
 #define YRES        900
 
+//#define INIT_MUSIC
+#define USE_SOUND_THREAD
+
 #define CELLS       12
 #define STATE_SIZE  2
+#define BORDER_DIM  .9F
+#define CELL_DIM    (BORDER_DIM/(CELLS*.5F))
+
 
 #include "assert.h"
 
@@ -58,14 +64,15 @@ enum class cell_state {
 };
 
 struct cell {
-  int         x;
-  int         y;
-  bool        has_bomb;
-  int         near_bombs;
+  int         x           ;
+  int         y           ;
+  bool        has_bomb    ;
+  int         near_bombs  ;
 
   float       changed_time;
-  cell_state  state;
-  cell_state  next_state;
+  float       mouse_time  ;
+  cell_state  state       ;
+  cell_state  next_state  ;
 
   cell*       near_cells[8];
 };
@@ -79,6 +86,7 @@ struct game {
   float       start_time;
   int         total_bombs;
   int         total_revealed;
+
   game_state  game_state;
   cell        cells[CELLS*CELLS];
 };
@@ -86,20 +94,22 @@ struct game {
 extern "C" {
   #pragma bss_seg(".mainbss")
   int                 _fltused                      ;
-  uint32_t            lcg_seed                      ;
+  uint32_t            lcg_state                     ;
+  int                 mouse_x;
+  int                 mouse_y;
   struct game         game                          ;
   GLfloat             state[CELLS*CELLS+STATE_SIZE] ;
   SUsample            waveBuffer[SU_BUFFER_LENGTH]  ;
 
-  static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+  LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
   #pragma data_seg(".xres")
-  static int xres = XRES;
+  int res_x = XRES;
   #pragma data_seg(".yres")
-  static int yres = YRES;
+  int res_y = YRES;
 
   #pragma data_seg(".windowRect")
-  static RECT windowRect {
+  RECT windowRect {
     0
   , 0
   , XRES
@@ -107,7 +117,7 @@ extern "C" {
   };
 
   #pragma data_seg(".pixelFormatDescriptor")
-  static PIXELFORMATDESCRIPTOR pixelFormatSpecification {
+  PIXELFORMATDESCRIPTOR pixelFormatSpecification {
       sizeof(PIXELFORMATDESCRIPTOR)                           // nSize
     , 1                                                       // nVersion
     , PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER  // dwFlags
@@ -137,7 +147,7 @@ extern "C" {
   };
 
   #pragma data_seg(".windowClassSpecification")
-  static WNDCLASSA windowClassSpecification {
+  WNDCLASSA windowClassSpecification {
         CS_OWNDC | CS_HREDRAW | CS_VREDRAW  // style
       , &WndProc                            // lpfnWndProc
       , 0                                   // cbClsExtra
@@ -151,8 +161,7 @@ extern "C" {
   };
 
   #pragma data_seg(".waveFormatSpecification")
-  WAVEFORMATEX waveFormatSpecification =
-  {
+  WAVEFORMATEX waveFormatSpecification {
     WAVE_FORMAT_IEEE_FLOAT                                // wFormatTag
   , SU_CHANNEL_COUNT                                      // nChannels
   , SU_SAMPLE_RATE                                        // nSamplesPerSec
@@ -163,8 +172,7 @@ extern "C" {
   };
 
   #pragma data_seg(".waveHeader")
-  WAVEHDR waveHeader =
-  {
+  WAVEHDR waveHeader {
     (LPSTR)waveBuffer                   // lpData
   , SU_BUFFER_LENGTH * sizeof(SUsample) // dwBufferLength
   , 0                                   // dwBytesRecorded
@@ -176,26 +184,25 @@ extern "C" {
   };
 
   #pragma data_seg(".waveTime")
-  MMTIME waveTime =
-  {
+  MMTIME waveTime {
     TIME_SAMPLES
   , 0
   };
 
   #pragma data_seg(".glCreateShaderProgramv")
-  static const char nm_glCreateShaderProgramv[] = "glCreateShaderProgramv";
+  char const nm_glCreateShaderProgramv[] = "glCreateShaderProgramv";
 
   #pragma data_seg(".glUseProgram")
-  static const char nm_glUseProgram[] = "glUseProgram";
+  char const nm_glUseProgram[] = "glUseProgram";
 
   #pragma data_seg(".glUniform4fv")
-  static const char nm_glUniform4fv[] = "glUniform4fv";
+  char const nm_glUniform4fv[] = "glUniform4fv";
 
   #pragma data_seg(".fragmentShaderProgram")
-  static GLint fragmentShaderProgram;
+  GLint fragmentShaderProgram;
 
   #pragma data_seg(".fragmentShaders")
-  static char const * fragmentShaders[] = {
+  char const * fragmentShaders[] = {
     #include "shader.inl"
   };
 

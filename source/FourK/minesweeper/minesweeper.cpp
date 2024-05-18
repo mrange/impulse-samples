@@ -16,6 +16,11 @@
 
 #include "minesweeper.h"
 
+#define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
+#define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
+
+#include <math.h>
+
 extern "C" {
 
 #ifdef _DEBUG
@@ -37,7 +42,8 @@ extern "C" {
 
   #pragma code_seg(".init_game")
   void init_game() {
-    lcg_seed = GetTickCount();
+//    lcg_seed = GetTickCount();
+    lcg_state = 19740531;
 
     // Bit of debugging info during debug builds
     //  Don't want to waste bytes on that in Release mode
@@ -58,8 +64,8 @@ extern "C" {
 
   #pragma code_seg(".lcg_rand_uint32")
   uint32_t lcg_rand_uint32() {
-    lcg_seed = (1664525U * lcg_seed + 1013904223U);
-    return lcg_seed;
+    lcg_state = (1664525U * lcg_state + 1013904223U);
+    return lcg_state;
   }
 
   #pragma code_seg(".lcg_rand_float")
@@ -124,11 +130,48 @@ extern "C" {
   #pragma code_seg(".draw_game")
   void draw_game(float time) {
     const int size = sizeof(state)/sizeof(GLfloat);
+    auto g_t        = time-game.start_time;
+    auto r_x        = static_cast<GLfloat>(res_x);
+    auto r_y        = static_cast<GLfloat>(res_y);
+    auto m_x        = static_cast<GLfloat>(mouse_x);
+    auto m_y        = static_cast<GLfloat>(mouse_y);
+
     // Setup state
     GLfloat* s  = state;
-    s[0]        = time-game.start_time;
-    s[1]        = static_cast<GLfloat>(xres);
-    s[2]        = static_cast<GLfloat>(yres);
+    s[0]        = g_t;
+    s[1]        = r_x;
+    s[2]        = r_y;
+    s[4]        = m_x;
+    s[5]        = m_y;
+
+    auto mp_x   = (-res_x+2.F*m_x)/res_y;
+    auto mp_y   = -(-res_y+2.F*m_y)/res_y;
+
+    auto mcp_x  = mp_x;
+    auto mcp_y  = mp_y;
+
+    mcp_x       /= CELL_DIM;
+    mcp_y       /= CELL_DIM;
+
+    mcp_x       -= 0.5F;
+    mcp_y       -= 0.5F;
+
+    auto mnp_x  = floor(mcp_x+0.5F);
+    auto mnp_y  = floor(mcp_y+0.5F);
+
+    static_assert(CELLS%2 == 0, "Expected cells to be even");
+
+    mnp_x       += CELLS*0.5F;
+    mnp_y       += CELLS*0.5F;
+
+    auto ci      = static_cast<int>(mnp_x+mnp_y*CELLS);
+
+    if (ci >= 0 && ci < CELLS*CELLS) {
+      auto & cell = game.cells[ci];
+      cell.mouse_time = g_t;
+    }
+
+
     //  Jump to first cell
     s           = state+4*STATE_SIZE;
     // Setup cells
@@ -137,6 +180,7 @@ extern "C" {
 
       s[0] = static_cast<GLfloat>(-cell.near_bombs);
       s[1] = cell.changed_time;
+      s[2] = cell.mouse_time;
       s += 4;
     }
 
@@ -165,11 +209,17 @@ extern "C" {
       return 0;
     }
 
+    // Mouse moved
+    if (uMsg == WM_MOUSEMOVE) {
+      mouse_x = GET_X_LPARAM(lParam);
+      mouse_y = GET_Y_LPARAM(lParam);
+    }
+
     // Resized the window? No problem!
     if (uMsg == WM_SIZE) {
-      xres = LOWORD(lParam);
-      yres = HIWORD(lParam);
-      glViewport(0, 0, xres, yres);
+      res_x = LOWORD(lParam);
+      res_y = HIWORD(lParam);
+      glViewport(0, 0, res_x, res_y);
     }
 
     // Another way to stop!
@@ -263,6 +313,7 @@ int __cdecl main() {
   // Init our game
   init_game();
 
+#ifdef INIT_MUSIC
   // Now init the music.
   //  The way sointu works is that we call su_render_song which writes samples
   //  to a wave buffer
@@ -281,7 +332,6 @@ int __cdecl main() {
     pop ebx
   }
 
-#define USE_SOUND_THREAD
 #ifdef USE_SOUND_THREAD
   // Create the wave buffer in a separate thread so we don't have to wait for it
   auto hthread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)su_render_song, waveBuffer, 0, 0);
@@ -289,6 +339,7 @@ int __cdecl main() {
 #else
   // We don't mind waiting for the sound.
   su_render_song(waveBuffer);
+#endif
 #endif
 
   // Play the sound buffer

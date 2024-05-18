@@ -20,8 +20,8 @@
 // Required prelude
 
 const int 
-  cells       = 12
-, state_size  = 2
+  CELLS       = 12
+, STATE_SIZE  = 2
 ;
 
 // The result of the shader
@@ -34,6 +34,11 @@ layout(location=0) uniform vec4[12*12+2] state;
 //  The entrypoint is: void main()
 //  gl_FragCoord is the input fragment position
 //  fcol is the output fragment color
+
+const float 
+    BORDER_DIM  = .9
+  , CELL_DIM    = BORDER_DIM/(CELLS*.5)
+  ;
 
 // License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
 const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
@@ -128,31 +133,26 @@ vec2 mod2(inout vec2 p, vec2 size) {
   return c;
 }
 
-
 void main() {
-  const float bw = 0.9;
-  const float sw = bw/(cells*0.5);
-
   float tm = state[0].x;
   vec2 res = state[0].yz;
 
-  vec2 q = gl_FragCoord.xy/res;
-  vec2 p = -1. + 2. * q;
-
-  p.x *= res.x/res.y;
+  vec2 p   = (-res+2.*gl_FragCoord.xy)/res.yy;
+  vec2 mp  = (-res+2.*state[1].xy)/res.yy;
+  mp.y     = -mp.y;
 
   float aa = sqrt(2.) / res.y;
 
   vec3 col = vec3(0.);
   vec2 p0 = p;
   vec2 cp = p;
-  const float cz = sw;
+  const float cz = CELL_DIM;
   float caa = aa/cz;
   cp /= cz;
   cp -= 0.5;
   vec2 np = round(cp);
   cp -= np;
-  np += cells*0.5;
+  np += CELLS*.5;
 
   const float tcw = 0.1;
   const float tz  = 0.04;
@@ -163,13 +163,15 @@ void main() {
   tcp /= tz;
   float taa = aa/(tz);
 
-  int ci = clamp(int((np.x)+(np.y)*cells+state_size), 2, state.length()-1);
+  int ci = clamp(int((np.x)+(np.y)*CELLS+STATE_SIZE), 2, state.length()-1);
   vec4 c = state[ci];
 
   float cs = c.x;
+  float mts = c.z;
   
-  float d0 = box(p0, vec2(bw));
+  float d0 = box(p0, vec2(BORDER_DIM));
   if (d0 < 0.) {
+    col += hsv2rgb(vec3(0.55, 0.5, 2E-3))*(1./max(dot(cp, cp)+0.1*abs(mts-tm), 1E-3)); 
     float d1 = box(cp, vec2(0.4))-0.05;
     d1 = abs(d1)-0.0125;
     float fz = 0.25;
@@ -189,6 +191,8 @@ void main() {
     vec3 icol = acol*0.1;
     col = digit(col, tcp, acol, icol, taa, d, 1);
   }
+
+  col += hsv2rgb(vec3(0.4, 0.5, 2E-3))/max(length(p-mp), 1E-3); 
 
   col = sqrt(col);
   
