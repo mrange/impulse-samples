@@ -77,7 +77,7 @@ float circle8(vec2 p, float r) {
   return pow(dot(p,p), 1./8)-r;
 }
 
-vec3 norm8(vec2 p, float r, float i) {
+vec3 norm8(vec2 p, float r) {
   vec2 p4 = p*p;
   p4 *= p4;
   float r8 = r*r;
@@ -86,11 +86,10 @@ vec3 norm8(vec2 p, float r, float i) {
   float z8 = r8-dot(p4, p4);
   if (z8 > 0) {
     float z = pow(z8, 1./8);
-    vec3 cp = vec3(p, z*i);
+    vec3 cp = vec3(p, z);
     vec3 cp2 = cp*cp;
     vec3 cp7 = cp2*cp2;
     cp7 *= cp2*cp;
-    vec3 cn = normalize(cp7);
     return normalize(cp7);
   } else {
     return vec3(0,0,1);
@@ -100,19 +99,19 @@ vec3 norm8(vec2 p, float r, float i) {
   
 float segmentx(vec2 p, vec2 dim) {
   p.x = abs(p.x);
-  float o = .5*max(dim.x-dim.y, 0);
+  float o = max(dim.x-dim.y, 0)/2;
   return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;  
 }
 
 vec3 palette(float a) {
-  return 1+sin(.5*vec3(-4,3,1)+a);
+  return 1+sin(vec3(-4,3,1)/2+a);
 }
 
 
 // License: MIT OR CC-BY-NC-4.0, author: mercury, found: https://mercury.sexy/hg_sdf/
 vec2 mod2(inout vec2 p, vec2 size) {
-  vec2 c = floor((p + size*.5)/size);
-  p = mod(p + size*.5,size) - size*.5;
+  vec2 c = floor((p + size/2)/size);
+  p = mod(p + size/2,size) - size/2;
   return c;
 }
 
@@ -146,7 +145,7 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
     , d1  = segmentx(p1, ddim)
     , d2  = dot(normalize(vec2(1, -1)), p2)
     , d   = min(d0, d1)
-    , sx  = .5*(n1.x+1) + n1.y+1
+    , sx  = (n1.x+1)/2 + n1.y+1
     , sy  = -n0
     , s   = d2 > 0 ? (3+sx) : sy
     , m   = floor(n)
@@ -171,14 +170,6 @@ void main() {
     , tcp = p
     ;
 
-  float 
-      tm  = state[0].x
-    , aa  = sqrt(2) / res.y
-    , caa = aa/cz
-    , taa = aa/tz
-    , faa = aa/(fz*cz)
-    ;
-
   mp.y     = -mp.y;
   vec3 
       col = vec3(0.)
@@ -189,11 +180,19 @@ void main() {
     , ld0 = normalize(vec3(2.,3.,3.))
     ;
 
+  float 
+      tm  = state[0].x
+    , aa  = sqrt(2) / res.y
+    , caa = aa/cz
+    , taa = aa/tz
+    , faa = aa/(fz*cz)
+    ;
+
 
   cp /= cz;
   cp -= .5;
 
-  tcp.x -= (-.5*tr)*tcw;
+  tcp.x -= -tcw*tr/2;
   tcp.y -= -.95;
 
   vec2 
@@ -202,7 +201,7 @@ void main() {
     ;
 
   cp -= np;
-  np += CELLS*.5;
+  np += CELLS/2;
 
   tcp /= tz;
 
@@ -216,26 +215,37 @@ void main() {
     ;
   
     
-  vec3 n = norm8(cp, 0.45-1/80., cs > 0 ? 1:1);
+  vec3 
+      n         = norm8(cp, 0.45-1/80.)
+    , mouseCol  = sqrt(palette(tm))
+    ;
+  float fre = 1+dot(n, rd3);
 
   if (max(abs(p0).x, abs(p0).y) < BORDER_DIM) {
 
-    vec3 ccol = col*0.25; 
+    vec3 ccol = col/4; 
 
-    float spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0.), 40);
-    float gd = length(cp);
+    float 
+        spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0.), 20)/4
+      , spe3 = pow(max(dot(ld3, reflect(rd3, n)), 0.), 40)
+      ;
+
     const vec2 states[6] = vec2[6](
       vec2(0  ,0)
-    , vec2(0.5,0)
-    , vec2(2  ,1)
+    , vec2(.5 ,1)
+    , vec2(2  ,2)
     , vec2(10 ,0)
-    , vec2(10 ,1)
-    , vec2(2  ,0)
+    , vec2(10 ,2)
+    , vec2(4  ,1)
     );
     
     vec2 state = states[int(cs)];
-    if (state.y > 0)  gd = min(abs(gd-0.1), gd);
-    vec3 scol =(0.2+palette(2.-1.05*cs))*(state.x*5E-3/max(gd, 3E-3));
+    float gd = length(cp);
+    for (float yy = 0; yy < state.y; ++yy) {
+      gd = min(abs(gd-0.1), gd);
+    }
+//    if (state.y > 0)  gd = ;
+    vec3 scol =(0.2+palette(2-cs))*(state.x*5E-3/max(gd, 3E-3));
     
     ccol = mix(ccol, scol, smoothstep(caa, -caa, d1));      
 
@@ -246,16 +256,16 @@ void main() {
           acol = palette(.33*cs-.5*fcp.y)
         , icol = acol*.075
         ;
-      ccol += acol*1E-2/max(length(fcp), 5E-1);
+//      ccol += acol*1E-2/max(length(fcp), 5E-1);
       ccol = digit(ccol, fcp, acol, icol, faa, -cs, 1);
     }
 
     vec3 gcol = palette(3.5-p.y);
 
-    ccol += spe0*step(1., cs);
+    ccol += (spe0+spe3*mouseCol)*fre*16.*step(1, cs);
     col = mix(col, ccol, smoothstep(caa, -caa, d1));
     d1 = abs(d1)-1/80.;
-    col = mix(col, mix(vec3(1.), gcol/3, smoothstep(mts+1/8., mts+0.5, tm)), smoothstep(caa, -caa, d1));
+    col = mix(col, mix(vec3(1.), gcol/3, smoothstep(mts+1/8., mts+.5, tm)), smoothstep(caa, -caa, d1));
   }
 
   if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
@@ -267,7 +277,8 @@ void main() {
     col = digit(col, tcp, acol, icol, taa, d, 1);
   }
 
-  col += palette(tm)*(1E-3/max(length(p-mp), 1E-3)); 
+  col += mouseCol*(1E-3/max(length(p-mp), 1E-3)); 
 
   fcol = vec4(sqrt(tanh(col)), 1);
 }
+
