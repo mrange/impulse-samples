@@ -79,7 +79,19 @@ extern "C" {
 
   #pragma code_seg(".reset_game")
   void reset_game(float time) {
+#ifdef NOCRT
+    // Well this is awkward
+    #define SZ_OF_GAME 0x2414
+    static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
+    _asm {
+      LEA edi, [game]
+      XOR eax, eax
+      MOV ecx, SZ_OF_GAME
+      REP STOSB
+    }
+#else
     memset(&game, 0, sizeof(game));
+#endif
     game.game_state = game_state::playing;
     game.start_time = time;
 
@@ -158,15 +170,39 @@ extern "C" {
     mcp_x       -= 0.5F;
     mcp_y       -= 0.5F;
 
-    auto mnp_x  = floor(mcp_x+0.5F);
-    auto mnp_y  = floor(mcp_y+0.5F);
+#ifdef NOCRT
+    float mnp_x;
+    float mnp_y;
+    _asm {
+      MOVSS       xmm0  , mcp_x
+      ROUNDSS     xmm0  , xmm0, 0
+      MOVSS       mnp_x , xmm0
+    
+      MOVSS       xmm0  , mcp_y
+      ROUNDSS     xmm0  , xmm0, 0
+      MOVSS       mnp_y , xmm0
+    }
+
+#else
+    auto mnp_x  = roundf(mcp_x);
+    auto mnp_y  = roundf(mcp_y);
+#endif
 
     static_assert(CELLS%2 == 0, "Expected cells to be even");
 
     mnp_x       += CELLS*0.5F;
     mnp_y       += CELLS*0.5F;
 
+#ifdef NOCRT
+    float cif = mnp_x+mnp_y*CELLS;
+    int ci;
+    _asm {
+      CVTTSS2SI eax , cif
+      MOV       ci  , eax
+    }
+#else
     auto ci      = static_cast<int>(mnp_x+mnp_y*CELLS);
+#endif
 
     if (mnp_x >= 0 && mnp_x < CELLS && mnp_y >= 0 && mnp_y < CELLS) {
       assert(ci >= 0 && ci < CELLS*CELLS);
@@ -204,8 +240,8 @@ extern "C" {
       }
     }
 
-    if (g_t >= next_state_advance) {
-      next_state_advance = g_t + STATE_SLEEP;
+    if (g_t >= game.next_state_advance) {
+      game.next_state_advance = g_t + STATE_SLEEP;
 
       for (auto & cell : game.cells) {
         switch (cell.state) {
@@ -319,6 +355,8 @@ extern "C" {
         if (wParam == VK_ESCAPE) {
           PostQuitMessage(0);
           return 0;
+        } else if (wParam == 'R') {
+          game.game_state = game_state::reset;
         }
         break;
     }
@@ -341,16 +379,11 @@ int __cdecl main() {
   auto hinstance    = GetModuleHandle(0);
   assert(hinstance);
 
-  // Sets up a Rebecca purple brush that will be visible if the shader fails for some reason
-  auto hbackground  = CreateSolidBrush(RGB(0x66, 0x33, 0x99));
-  assert(hbackground);
-
   // Use default arrow cursor
   auto hcursor      = LoadCursor(nullptr, IDC_ARROW);
 
   // Setups the windows class
   windowClassSpecification.hInstance      = hinstance   ;
-  windowClassSpecification.hbrBackground  = hbackground ;
   windowClassSpecification.hCursor        = hcursor     ;
 
   // Registers the windows class

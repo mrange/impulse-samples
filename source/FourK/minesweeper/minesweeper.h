@@ -16,6 +16,8 @@
 
 #pragma once
 
+#define NOCRT
+
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #define WINDOWS_IGNORE_PACKING_MISMATCH
@@ -64,15 +66,15 @@ enum class cell_state {
 };
 
 struct cell {
-  int         x           ;
-  int         y           ;
-  bool        has_bomb    ;
-  int         near_bombs  ;
+  int         x                   ;
+  int         y                   ;
+  bool        has_bomb            ;
+  int         near_bombs          ;
 
-  float       changed_time;
-  float       mouse_time  ;
-  cell_state  state       ;
-  cell_state  next_state  ;
+  float       changed_time        ;
+  float       mouse_time          ;
+  cell_state  state               ;
+  cell_state  next_state          ;
 
   cell*       near_cells[8];
 };
@@ -84,19 +86,19 @@ enum class game_state {
 };
 
 struct game {
-  float       start_time;
-  int         total_bombs;
-  int         total_revealed;
+  float       start_time          ;
+  int         total_bombs         ;
+  int         total_revealed      ;
+  float       next_state_advance  ;
 
-  game_state  game_state;
-  cell        cells[CELLS*CELLS];
+  game_state  game_state          ;
+  cell        cells[CELLS*CELLS]  ;
 };
 
 extern "C" {
   #pragma bss_seg(".mainbss")
   int                 _fltused                      ;
   uint32_t            lcg_state                     ;
-  float               next_state_advance            ;
   int                 mouse_x                       ;
   int                 mouse_y                       ;
   int                 mouse_left_button_previous    ;

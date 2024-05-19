@@ -232,7 +232,7 @@ void main() {
 
     const vec2 states[6] = vec2[6](
       vec2(0  ,0)
-    , vec2(.5 ,1)
+    , vec2(.5 ,0)
     , vec2(2  ,2)
     , vec2(10 ,0)
     , vec2(10 ,2)
@@ -262,7 +262,7 @@ void main() {
 
     vec3 gcol = palette(3.5-p.y);
 
-    ccol += (spe0+spe3*mouseCol)*fre*16.*step(1, cs);
+    ccol += (spe0+spe3*mouseCol)*fre*16*step(1, cs);
     col = mix(col, ccol, smoothstep(caa, -caa, d1));
     d1 = abs(d1)-1/80.;
     col = mix(col, mix(vec3(1.), gcol/3, smoothstep(mts+1/8., mts+.5, tm)), smoothstep(caa, -caa, d1));
