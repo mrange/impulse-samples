@@ -47,7 +47,7 @@ const float
   ;
 
 const vec2 
-    ddim = vec2(0.75, 0.075)
+    ddim = vec2(.75, .075)
   ;
 
 const int[16] ddigits = int[16](
@@ -69,25 +69,33 @@ const int[16] ddigits = int[16](
   , 0x2B // F  
   ); 
 // License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
-const vec4 hsv2rgb_K = (vec4(3,2,1,9)/3);
+const vec4 
+      hsv2rgb_K = (vec4(3,2,1,9)/3)
+    ;
 
 // License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
 vec3 hsv2rgb(vec3 c) {
   vec3 p = abs(fract(c.xxx + hsv2rgb_K.xyz) * 6 - hsv2rgb_K.www);
   return c.z * mix(hsv2rgb_K.xxx, clamp(p - hsv2rgb_K.xxx, 0, 1), c.y);
 }
-// License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
-//  Macro version of above to enable compile-time constants
-#define HSV2RGB(c)  (c.z * mix((vec4(3,2,1,9)/3).xxx, clamp(abs(fract(c.xxx + (vec4(3,2,1,9)/3).xyz) * 6.0 - (vec4(3,2,1,9)/3).www) - (vec4(3,2,1,9)/3).xxx, 0.0, 1.0), c.y))
-#define HSV2RGBT(c) vec4(HSV2RGB(c.xyz), c.w) 
+
+vec4 hsv2rgb(vec4 c) {
+  return vec4(hsv2rgb(vec3(c.xyz)), c.w);
+}
+
+const vec3
+    mouseCol      = hsv2rgb(vec3(.4, .5, 2E-3))
+  , mouseVisitCol = hsv2rgb(vec3(.55, .5, 2E-3))
+  , timeCol       = hsv2rgb(vec3(.95, .9, 1.)) 
+  ;
 
 const vec4[6] stateCol = vec4[6](
-    HSV2RGBT(vec4(0.0 , 0.0, 0.0  , 0.))    // covered_empty
-  , HSV2RGBT(vec4(0.55, 0.7, 1.0  , 0.125)) // covered_empty
-  , HSV2RGBT(vec4(0.40, 0.7, 1.0  , 0.5))   // covered_flag 
-  , HSV2RGBT(vec4(0.00, 0.0, 1.0  , 1.))    // uncovering   
-  , HSV2RGBT(vec4(0.00, 0.8, 1.0  , 1.))    // exploding    
-  , HSV2RGBT(vec4(0.00, 0.8, 0.25 , 0.5))   // exploded     
+    hsv2rgb(vec4(0.0 , 0.0, 0.0  , 0.))    // covered_empty
+  , hsv2rgb(vec4(0.55, 0.7, 1.0  , 0.125)) // covered_empty
+  , hsv2rgb(vec4(0.40, 0.7, 1.0  , 0.5))   // covered_flag 
+  , hsv2rgb(vec4(0.00, 0.0, 1.0  , 1.))    // uncovering   
+  , hsv2rgb(vec4(0.00, 0.8, 1.0  , 1.))    // exploding    
+  , hsv2rgb(vec4(0.00, 0.8, 0.25 , 0.5))   // exploded     
   );
 
 
@@ -102,13 +110,13 @@ vec2 mod2(inout vec2 p, vec2 size) {
 // License: MIT, author: Inigo Quilez, found: https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
 float box(vec2 p, vec2 b) {
   vec2 d = abs(p)-b;
-  return length(max(d,0.0)) + min(max(d.x,d.y),0.0);
+  return length(max(d,0)) + min(max(d.x,d.y),0);
 }
 
 float dsegmentx(vec2 p, vec2 dim) {
   p.x = abs(p.x);
   float o = .5*max(dim.x-dim.y, 0);
-  return (p.x < o ? abs(p.y) : length(p-vec2(o, 0.0)))-dim.y;  
+  return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;  
 }
 
 vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
@@ -207,13 +215,14 @@ void main() {
     , d1  = box(cp, vec2(.4))-.05;
     ;
 
-  if (d0 < 0.) {
-    col += hsv2rgb(vec3(.55, .5, 2E-3))*(1./max(dot(cp, cp)+smoothstep(mts+.125, mts+3., tm), 1E-3)); 
-    vec2 fcp = cp/fz;
+  if (d0 < 0) {
+    col += mouseVisitCol*(1./max(dot(cp, cp)+smoothstep(mts+.125, mts+3., tm), 1E-3)); 
     if (cs < 0) {
+      vec2 fcp = cp/fz;
+      fcp.x += -fcp.y/8;
       vec3 
-          acol = hsv2rgb(vec3(.3+.3*cs/9, .5, 1.))
-        , icol = acol*.1
+          acol = 0.5+0.5*sin(.5*vec3(-4,3,1)+0.33*cs-0.5*fcp.y)
+        , icol = acol*.075
         ;
       col = digit(col, fcp, acol, icol, faa, -cs, 1);
     } else {
@@ -227,13 +236,13 @@ void main() {
   if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
     float d = mod(tm*pow(10, tnp.x), 10);
     vec3 
-        acol = hsv2rgb(vec3(.95, .9, 1.))
-      , icol = acol*.1
+        acol = timeCol 
+      , icol = timeCol*.075
       ;
     col = digit(col, tcp, acol, icol, taa, d, 1);
   }
 
-  col += hsv2rgb(vec3(.4, .5, 2E-3))/max(length(p-mp), 1E-3); 
+  col += mouseCol/max(length(p-mp), 1E-3); 
 
   col = sqrt(col);
   
