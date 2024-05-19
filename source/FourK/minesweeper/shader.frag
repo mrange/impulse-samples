@@ -36,18 +36,20 @@ layout(location=0) uniform vec4[12*12+2] state;
 //  fcol is the output fragment color
 
 const float 
-    BORDER_DIM  = .9
-  , CELL_DIM    = BORDER_DIM/(CELLS*.5)
-  , tcw         = .1
-  , fz          = .25
-  , tz          = .04
-  , cz          = CELL_DIM
-  , tr          =.75
-  , deps        = .1
+    BORDER_DIM      = .9
+  , CELL_DIM        = BORDER_DIM/(CELLS*.5)
+  , PI              = acos(-1)
+  , TAU             = 2*PI
+  , tcw             = .1
+  , fz              = .25
+  , tz              = .04
+  , cz              = CELL_DIM
+  , tr              = .75
+  , deps            = .1
   ;
 
 const vec2 
-    ddim = vec2(.75, .075)
+    ddim  = vec2(.75, .075)
   ;
 
 const int[16] ddigits = int[16](
@@ -68,35 +70,43 @@ const int[16] ddigits = int[16](
   , 0x2F // E
   , 0x2B // F  
   ); 
-// License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
-const vec4 
-      hsv2rgb_K = (vec4(3,2,1,9)/3)
-    ;
 
-// License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
-vec3 hsv2rgb(vec3 c) {
-  vec3 p = abs(fract(c.xxx + hsv2rgb_K.xyz) * 6 - hsv2rgb_K.www);
-  return c.z * mix(hsv2rgb_K.xxx, clamp(p - hsv2rgb_K.xxx, 0, 1), c.y);
+float circle8(vec2 p, float r) {
+  p *= p;
+  p *= p;
+  return pow(dot(p,p), 1./8)-r;
 }
 
-vec4 hsv2rgb(vec4 c) {
-  return vec4(hsv2rgb(vec3(c.xyz)), c.w);
+vec3 norm8(vec2 p, float r, float i) {
+  vec2 p4 = p*p;
+  p4 *= p4;
+  float r8 = r*r;
+  r8 *= r8;
+  r8 *= r8;
+  float z8 = r8-dot(p4, p4);
+  if (z8 > 0) {
+    float z = pow(z8, 1./8);
+    vec3 cp = vec3(p, z*i);
+    vec3 cp2 = cp*cp;
+    vec3 cp7 = cp2*cp2;
+    cp7 *= cp2*cp;
+    vec3 cn = normalize(cp7);
+    return normalize(cp7);
+  } else {
+    return vec3(0,0,1);
+  }
+}
+  
+  
+float segmentx(vec2 p, vec2 dim) {
+  p.x = abs(p.x);
+  float o = .5*max(dim.x-dim.y, 0);
+  return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;  
 }
 
-const vec3
-    mouseCol      = hsv2rgb(vec3(.4, .5, 2E-3))
-  , mouseVisitCol = hsv2rgb(vec3(.55, .5, 2E-3))
-  , timeCol       = hsv2rgb(vec3(.95, .9, 1.)) 
-  ;
-
-const vec4[6] stateCol = vec4[6](
-    hsv2rgb(vec4(0.0 , 0.0, 0.0  , 0.))    // covered_empty
-  , hsv2rgb(vec4(0.55, 0.7, 1.0  , 0.125)) // covered_empty
-  , hsv2rgb(vec4(0.40, 0.7, 1.0  , 0.5))   // covered_flag 
-  , hsv2rgb(vec4(0.00, 0.0, 1.0  , 1.))    // uncovering   
-  , hsv2rgb(vec4(0.00, 0.8, 1.0  , 1.))    // exploding    
-  , hsv2rgb(vec4(0.00, 0.8, 0.25 , 0.5))   // exploded     
-  );
+vec3 palette(float a) {
+  return 1+sin(.5*vec3(-4,3,1)+a);
+}
 
 
 // License: MIT OR CC-BY-NC-4.0, author: mercury, found: https://mercury.sexy/hg_sdf/
@@ -106,21 +116,7 @@ vec2 mod2(inout vec2 p, vec2 size) {
   return c;
 }
 
-
-// License: MIT, author: Inigo Quilez, found: https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
-float box(vec2 p, vec2 b) {
-  vec2 d = abs(p)-b;
-  return length(max(d,0)) + min(max(d.x,d.y),0);
-}
-
-float dsegmentx(vec2 p, vec2 dim) {
-  p.x = abs(p.x);
-  float o = .5*max(dim.x-dim.y, 0);
-  return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;  
-}
-
 vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
-
   vec2 
       ap = abs(p)
     , cp = p-.5
@@ -146,9 +142,9 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
   p2    = abs(p2);
 
   float 
-      d0  = dsegmentx(p0, ddim)
-    , d1  = dsegmentx(p1, ddim)
-    , d2  = dot(normalize(vec2(1.0, -1.0)), p2)
+      d0  = segmentx(p0, ddim)
+    , d1  = segmentx(p1, ddim)
+    , d2  = dot(normalize(vec2(1, -1)), p2)
     , d   = min(d0, d1)
     , sx  = .5*(n1.x+1) + n1.y+1
     , sy  = -n0
@@ -166,10 +162,6 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
 }
 
 void main() {
-  vec3 
-      col = vec3(0)
-    ;
-
   vec2  
       res = state[0].yz
     , p   = (-res+2*gl_FragCoord.xy)/res.yy
@@ -188,6 +180,15 @@ void main() {
     ;
 
   mp.y     = -mp.y;
+  vec3 
+      col = vec3(0.)
+    , p3  = vec3(p, 0.)
+    , mp3 = vec3(mp, 1.)
+    , rd3 = normalize(p3-vec3(0,0,10.))
+    , ld3 = normalize(mp3-p3)
+    , ld0 = normalize(vec3(2.,3.,3.))
+    ;
+
 
   cp /= cz;
   cp -= .5;
@@ -205,46 +206,68 @@ void main() {
 
   tcp /= tz;
 
-  int ci = int((np.x)+(np.y)*CELLS+STATE_SIZE);
-  vec4 c = state[ci];
+  float fi = (np.x)+(np.y)*CELLS+STATE_SIZE;
+  vec4 c = state[int(fi)];
 
   float 
       cs  = c.x
     , mts = c.z
-    , d0  = box(p0, vec2(BORDER_DIM))
-    , d1  = box(cp, vec2(.4))-.05;
+    , d1  = circle8(cp, 0.45);
     ;
+  
+    
+  vec3 n = norm8(cp, 0.45-1/80., cs > 0 ? 1:1);
 
-  if (d0 < 0) {
-    col += mouseVisitCol*(1./max(dot(cp, cp)+smoothstep(mts+.125, mts+3., tm), 1E-3)); 
+  if (max(abs(p0).x, abs(p0).y) < BORDER_DIM) {
+
+    vec3 ccol = col*0.25; 
+
+    float spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0.), 40);
+    float gd = length(cp);
+    const vec2 states[6] = vec2[6](
+      vec2(0  ,0)
+    , vec2(0.5,0)
+    , vec2(2  ,1)
+    , vec2(10 ,0)
+    , vec2(10 ,1)
+    , vec2(2  ,0)
+    );
+    
+    vec2 state = states[int(cs)];
+    if (state.y > 0)  gd = min(abs(gd-0.1), gd);
+    vec3 scol =(0.2+palette(2.-1.05*cs))*(state.x*5E-3/max(gd, 3E-3));
+    
+    ccol = mix(ccol, scol, smoothstep(caa, -caa, d1));      
+
     if (cs < 0) {
       vec2 fcp = cp/fz;
       fcp.x += -fcp.y/8;
       vec3 
-          acol = 0.5+0.5*sin(.5*vec3(-4,3,1)+0.33*cs-0.5*fcp.y)
+          acol = palette(.33*cs-.5*fcp.y)
         , icol = acol*.075
         ;
-      col = digit(col, fcp, acol, icol, faa, -cs, 1);
-    } else {
-      vec4 scol = stateCol[int(cs)]; 
-      col = mix(col, scol.xyz, smoothstep(caa, -caa, d1)*scol.w);      
+      ccol += acol*1E-2/max(length(fcp), 5E-1);
+      ccol = digit(ccol, fcp, acol, icol, faa, -cs, 1);
     }
-    d1 = abs(d1)-.0125;
-    col = mix(col, vec3(1), smoothstep(caa, -caa, d1));
+
+    vec3 gcol = palette(3.5-p.y);
+
+    ccol += spe0*step(1., cs);
+    col = mix(col, ccol, smoothstep(caa, -caa, d1));
+    d1 = abs(d1)-1/80.;
+    col = mix(col, mix(vec3(1.), gcol/3, smoothstep(mts+1/8., mts+0.5, tm)), smoothstep(caa, -caa, d1));
   }
 
   if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
     float d = mod(tm*pow(10, tnp.x), 10);
     vec3 
-        acol = timeCol 
-      , icol = timeCol*.075
+        acol = palette(-4.*p.y+(tnp.x < 1 ? 0:3))
+      , icol = acol*.075
       ;
     col = digit(col, tcp, acol, icol, taa, d, 1);
   }
 
-  col += mouseCol/max(length(p-mp), 1E-3); 
+  col += palette(tm)*(1E-3/max(length(p-mp), 1E-3)); 
 
-  col = sqrt(col);
-  
-  fcol = vec4(col, 1);
+  fcol = vec4(sqrt(tanh(col)), 1);
 }
