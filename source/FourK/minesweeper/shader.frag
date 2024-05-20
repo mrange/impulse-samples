@@ -260,8 +260,8 @@ void main() {
       vec2 fcp = cp/fz;
       fcp.x += -fcp.y/8;
       vec3 
-          acol = palette(.33*cs-.5*fcp.y)
-        , icol = acol*.075
+          acol = palette(cs/2-.5*fcp.y)
+        , icol = acol/20
         ;
 //      ccol += acol*1E-2/max(length(fcp), 5E-1);
       ccol = digit(ccol, fcp, acol, icol, faa, -cs, 1);

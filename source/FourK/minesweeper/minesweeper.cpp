@@ -68,6 +68,13 @@ extern "C" {
     return lcg_state;
   }
 
+  enum class traverse_state {
+    left_to_right = 0
+  , top_to_bottom = 1
+  , right_to_left = 2
+  , bottom_to_top = 3
+  };
+
   #pragma code_seg(".reset_board")
   void reset_board(float time) {
 #ifdef NOCRT
@@ -134,6 +141,31 @@ extern "C" {
         cell.near_bombs = near_bombs;
       }
     }
+
+    for(;;) {
+      auto x0 = lcg_rand_uint32()%(CELLS/2);
+      auto y0 = lcg_rand_uint32()%(CELLS/2);
+
+      auto x1 = lcg_rand_uint32()%(1+CELLS/2);
+      auto y1 = lcg_rand_uint32()%(1+CELLS/2);
+
+      auto x = x0+x1;
+      auto y = y0+y1;
+      assert(x >= 0);
+      assert(x < CELLS);
+      assert(y >= 0);
+      assert(y < CELLS);
+      auto i = x+CELLS*y;
+      assert(i >= 0);
+      assert(i < CELLS*CELLS);
+      auto & cell = game.board.cells[i];
+      if (cell.near_bombs == 0 && !cell.has_bomb) {
+        cell.next_state = cell_state::uncovering;
+        break;
+      }
+    }
+
+
   }
   
   #pragma code_seg(".reset_game")

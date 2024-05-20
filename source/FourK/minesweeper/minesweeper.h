@@ -34,7 +34,7 @@
 #define USE_SOUND_THREAD
 
 #define CELLS           12
-#define BOMBS_PER_BOARD 12
+#define BOMBS_PER_BOARD 15
 
 #define STATE_SIZE      2
 #define BORDER_DIM      0.9F
