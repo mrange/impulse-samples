@@ -81,7 +81,7 @@ extern "C" {
   void reset_board(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_BOARD 0x2408
+    #define SZ_OF_BOARD 0x2258
     static_assert(SZ_OF_BOARD == sizeof(board), "The sizeof(board) and SZ_OF_BOARD must be the same");
     _asm {
       LEA edi, [game.board]
@@ -144,7 +144,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x241C
+    #define SZ_OF_GAME 0x226C
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]

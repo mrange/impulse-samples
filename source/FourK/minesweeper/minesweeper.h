@@ -30,7 +30,7 @@
 #define XRES        1600
 #define YRES        900
 
-#define INIT_MUSIC
+//#define INIT_MUSIC
 #define USE_SOUND_THREAD
 
 #define CELLS       12
