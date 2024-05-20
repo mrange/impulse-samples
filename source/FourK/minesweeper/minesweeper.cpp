@@ -401,10 +401,10 @@ extern "C" {
 }
 
 #pragma code_seg(".main")
-#ifdef _DEBUG
-int __cdecl main() {
-#else
+#ifdef NAKED_ENTRYPOINT
 void entrypoint() {
+#else
+int __cdecl main() {
 #endif
 /*
   auto dpiAware = SetProcessDPIAware();
@@ -587,10 +587,10 @@ void entrypoint() {
   // We are done, just exit. No need to waste bytes on cleaning
   //  up resources. Windows will do it for us.
 
-#ifdef _DEBUG
-  return 0;
-#else
+#ifdef NAKED_ENTRYPOINT
   ExitProcess(0);
+#else
+  return 0;
 #endif
 }
 

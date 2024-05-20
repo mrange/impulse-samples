@@ -105,32 +105,15 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
-      <AssemblerListingLocation>$(OutDir)</AssemblerListingLocation>
-      <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <CallingConvention>StdCall</CallingConvention>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <ConformanceMode>true</ConformanceMode>
-      <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
-      <ExceptionHandling>false</ExceptionHandling>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <Optimization>Full</Optimization>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <SDLCheck>false</SDLCheck>
-      <StringPooling>true</StringPooling>
-      <StructMemberAlignment>1Byte</StructMemberAlignment>
-      <TreatWarningAsError>true</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
-      <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <CallingConvention>StdCall</CallingConvention>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -138,15 +121,6 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <EntryPointSymbol>entrypoint</EntryPointSymbol>
-      <BaseAddress>
-      </BaseAddress>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention>
-      </DataExecutionPrevention>
-      <TargetMachine>MachineX86</TargetMachine>
-      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release - No STDLIB|Win32'">
@@ -160,6 +134,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
       <ConformanceMode>true</ConformanceMode>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <PreprocessorDefinitions>NAKED_ENTRYPOINT;WINDOWS;A32BITS;SIMD;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
       <ExceptionHandling>false</ExceptionHandling>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
@@ -215,7 +190,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>USE_CRINKLER;WINDOWS;A32BITS;SIMD;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NAKED_ENTRYPOINT;USE_CRINKLER;WINDOWS;A32BITS;SIMD;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
       <StringPooling>true</StringPooling>
