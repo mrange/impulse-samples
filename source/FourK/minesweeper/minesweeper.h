@@ -107,6 +107,8 @@ extern "C" {
   #pragma bss_seg(".mainbss")
   int                 _fltused                      ;
   uint32_t            lcg_state                     ;
+  int                 res_x                         ;
+  int                 res_y                         ;
   int                 mouse_x                       ;
   int                 mouse_y                       ;
   int                 mouse_left_button_previous    ;
@@ -118,19 +120,6 @@ extern "C" {
   SUsample            waveBuffer[SU_BUFFER_LENGTH]  ;
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-  #pragma data_seg(".xres")
-  int res_x = XRES;
-  #pragma data_seg(".yres")
-  int res_y = YRES;
-
-  #pragma data_seg(".windowRect")
-  RECT windowRect {
-    0
-  , 0
-  , XRES
-  , YRES
-  };
 
   #pragma data_seg(".pixelFormatDescriptor")
   PIXELFORMATDESCRIPTOR pixelFormatSpecification {

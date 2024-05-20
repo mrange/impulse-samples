@@ -42,7 +42,7 @@ extern "C" {
 
   #pragma code_seg(".init_game")
   void init_game() {
-    lcg_state = GetTickCount();
+    lcg_state = GetTickCount()+0x19740531U;
 //    lcg_state = 19740531;
 
     // Bit of debugging info during debug builds
@@ -455,14 +455,7 @@ int __cdecl main() {
   auto regOk = RegisterClassA(&windowClassSpecification);
   assert(regOk);
 
-  auto dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_POPUP;
-
-  // Adjust the window rect so that the client rect gets the desired size
-  auto rectOk = AdjustWindowRect(&windowRect, dwStyle, 0);
-  assert(rectOk);
-
-  auto width  = windowRect.right  - windowRect.left;
-  auto height = windowRect.bottom - windowRect.top;
+  auto dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_POPUP | WS_MAXIMIZE;
 
   // Create the window using the class we registered
   auto hwnd = CreateWindowExA(
@@ -470,11 +463,10 @@ int __cdecl main() {
   , windowClassSpecification.lpszClassName        // lpClassName
   , nullptr                                       // lpWindowName
   , dwStyle                                       // dwStyle
-  // Advanced math to compute top left corner of window
-  , (GetSystemMetrics(SM_CXSCREEN) - width) >> 1  // nX
-  , (GetSystemMetrics(SM_CYSCREEN) - height) >> 1 // nY
-  , width                                         // nWidth
-  , height                                        // nHeight
+  , 0                                             // nX
+  , 0                                             // nY
+  , XRES                                          // nWidth
+  , YRES                                          // nHeight
   , nullptr                                       // hWndParent
   , nullptr                                       // hMenu
   , nullptr                                       // hInstance
