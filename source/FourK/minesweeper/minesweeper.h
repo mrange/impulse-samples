@@ -30,7 +30,7 @@
 #define XRES        1600
 #define YRES        900
 
-//#define INIT_MUSIC
+#define INIT_MUSIC
 #define USE_SOUND_THREAD
 
 #define CELLS       12
@@ -80,20 +80,26 @@ struct cell {
 };
 
 enum class game_state {
-  reset     = 0
-, playing   = 1
-, game_over = 2
+  resetting_game  = 0
+, playing         = 1
+, resetting_board = 2
+, game_over       = 3
+};
+
+struct board {
+  int         total_bombs         ;
+  int         total_uncovered     ;
+  cell        cells[CELLS*CELLS]  ;
 };
 
 struct game {
   float       start_time          ;
   float       game_time           ;
-  int         total_bombs         ;
-  int         total_revealed      ;
   float       next_state_advance  ;
-
+  int         completed_boards    ;
   game_state  game_state          ;
-  cell        cells[CELLS*CELLS]  ;
+
+  board       board               ;
 };
 
 extern "C" {

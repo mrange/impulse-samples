@@ -77,23 +77,22 @@ extern "C" {
     return static_cast<float>(v);
   }
 
-  #pragma code_seg(".reset_game")
-  void reset_game(float time) {
+  #pragma code_seg(".reset_board")
+  void reset_board(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x2418
-    static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
+    #define SZ_OF_BOARD 0x2408
+    static_assert(SZ_OF_BOARD == sizeof(board), "The sizeof(board) and SZ_OF_BOARD must be the same");
     _asm {
-      LEA edi, [game]
+      LEA edi, [game.board]
       XOR eax, eax
-      MOV ecx, SZ_OF_GAME
+      MOV ecx, SZ_OF_BOARD
       REP STOSB
     }
+    #undef SZ_OF_BOARD
 #else
-    memset(&game, 0, sizeof(game));
+    memset(&game.board, 0, sizeof(board));
 #endif
-    game.game_state = game_state::playing;
-    game.start_time = time;
 
     auto total_bombs  = 0;
     auto offy         = 0;
@@ -101,7 +100,7 @@ extern "C" {
     for (auto y = 0; y < CELLS; ++y) {
       for (auto x = 0; x < CELLS; ++x) {
         auto off          = x + offy;
-        auto & cell       = game.cells[off];
+        auto & cell       = game.board.cells[off];
         auto rand         = lcg_rand_float();
         cell.x            = x;
         cell.y            = y;
@@ -115,9 +114,9 @@ extern "C" {
       }
       offy += CELLS;
     }
-    game.total_bombs = total_bombs;
+    game.board.total_bombs = total_bombs;
 
-    for (auto & cell : game.cells) {
+    for (auto & cell : game.board.cells) {
       auto near_bombs   = 0;
       auto near_i       = 0;
       for (auto yy = -1; yy <= 1; ++yy) {
@@ -127,7 +126,7 @@ extern "C" {
           auto near_off = near_y*CELLS+near_x;
           auto hit_mid = xx == 0 && yy == 0;
           if (!hit_mid && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
-            auto & near_cell        = game.cells[near_off];
+            auto & near_cell        = game.board.cells[near_off];
             assert(near_off >= 0);
             assert(near_off < CELLS*CELLS);
             cell.near_cells[near_i] = &near_cell;
@@ -140,6 +139,28 @@ extern "C" {
       cell.near_bombs = near_bombs;
     }
   }
+  
+  #pragma code_seg(".reset_game")
+  void reset_game(float time) {
+#ifdef NOCRT
+    // Well this is awkward
+    #define SZ_OF_GAME 0x241C
+    static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
+    _asm {
+      LEA edi, [game]
+      XOR eax, eax
+      MOV ecx, SZ_OF_GAME
+      REP STOSB
+    }
+    #undef SZ_OF_GAME
+#else
+    memset(&game, 0, sizeof(game));
+#endif
+    game.game_state = game_state::playing;
+    game.start_time = time;
+
+    reset_board(time);
+  }
 
   #pragma code_seg(".draw_game")
   void draw_game(float time) {
@@ -150,7 +171,8 @@ extern "C" {
     auto m_x        = static_cast<GLfloat>(mouse_x);
     auto m_y        = static_cast<GLfloat>(mouse_y);
 
-    if (game.game_state == game_state::playing)
+    assert(game.game_state == game_state::playing || game.game_state == game_state::game_over);
+    if (game.game_state != game_state::game_over)
       game.game_time  = g_t;
 
     // Setup state
@@ -210,7 +232,7 @@ extern "C" {
 
     if (mnp_x >= 0 && mnp_x < CELLS && mnp_y >= 0 && mnp_y < CELLS) {
       assert(ci >= 0 && ci < CELLS*CELLS);
-      auto & cell = game.cells[ci];
+      auto & cell = game.board.cells[ci];
       cell.mouse_time = g_t;
 
       if (cell.state == cell.next_state && game.game_state == game_state::playing) {
@@ -221,7 +243,7 @@ extern "C" {
           switch (cell.state) {
             case cell_state::covered_empty:
             case cell_state::covered_flag:
-              cell.state = cell.next_state = cell_state::uncovering;
+              cell.state        = cell.next_state = cell_state::uncovering;
               cell.changed_time = g_t;
               break;
           }
@@ -247,13 +269,17 @@ extern "C" {
     if (g_t >= game.next_state_advance) {
       game.next_state_advance = g_t + STATE_SLEEP;
 
-      for (auto & cell : game.cells) {
+      for (auto & cell : game.board.cells) {
         switch (cell.state) {
           case cell_state::uncovering:
             if (cell.has_bomb) {
               cell.next_state = cell_state::exploding;
               game.game_state = game_state::game_over;
             } else {
+              ++game.board.total_uncovered;
+              if (game.board.total_bombs + game.board.total_uncovered >= CELLS*CELLS) {
+                game.game_state = game_state::resetting_board;
+              }
               cell.next_state = cell_state::uncovered;
               if (cell.near_bombs == 0) {
                 for(auto near_cell : cell.near_cells) {
@@ -287,7 +313,7 @@ extern "C" {
         }
       }
 
-      for (auto & cell : game.cells) {
+      for (auto & cell : game.board.cells) {
         if (cell.state != cell.next_state) {
           cell.state        = cell.next_state;
           cell.changed_time = g_t;
@@ -301,7 +327,7 @@ extern "C" {
     //  Jump to first cell
     s           = state+4*STATE_SIZE;
     // Setup cells
-    for (auto & cell : game.cells) {
+    for (auto & cell : game.board.cells) {
       s[0] = cell.state != cell_state::uncovered ? static_cast<GLfloat>(cell.state) : static_cast<GLfloat>(-cell.near_bombs);
       s[1] = cell.changed_time;
       s[2] = cell.mouse_time;
@@ -360,7 +386,11 @@ extern "C" {
           PostQuitMessage(0);
           return 0;
         } else if (wParam == 'R') {
-          game.game_state = game_state::reset;
+          game.game_state = game_state::resetting_game;
+#ifdef _DEBUG
+        } else if (wParam == 'B') {
+          game.game_state = game_state::resetting_board;
+#endif
         }
         break;
     }
@@ -522,9 +552,15 @@ int __cdecl main() {
     }
 
     auto time = GetTickCount() / 1000.F;
-    if (game.game_state == game_state::reset) {
-      // Resets the game state
-      reset_game(time);
+    switch (game.game_state) {
+      case game_state::resetting_game:
+        reset_game(time);
+        break;
+      case game_state::resetting_board:
+        reset_board(time);
+        ++game.completed_boards;
+        game.game_state = game_state::playing;
+        break;
     }
 
     // Windows message handling done, let's draw some gfx
