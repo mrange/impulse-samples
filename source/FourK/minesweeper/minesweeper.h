@@ -16,7 +16,7 @@
 
 #pragma once
 
-#define NOCRT
+// #define NOCRT
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -33,11 +33,13 @@
 //#define INIT_MUSIC
 #define USE_SOUND_THREAD
 
-#define CELLS       12
-#define STATE_SIZE  2
-#define BORDER_DIM  0.9F
-#define CELL_DIM    (BORDER_DIM/(CELLS*0.5F))
-#define STATE_SLEEP 0.1F
+#define CELLS           12
+#define BOMBS_PER_BOARD 12
+
+#define STATE_SIZE      2
+#define BORDER_DIM      0.9F
+#define CELL_DIM        (BORDER_DIM/(CELLS*0.5F))
+#define STATE_SLEEP     0.1F
 
 
 #ifdef _DEBUG
@@ -68,8 +70,6 @@ enum class cell_state {
 };
 
 struct cell {
-  int         x                   ;
-  int         y                   ;
   bool        has_bomb            ;
   int         near_bombs          ;
 
@@ -89,8 +89,7 @@ enum class game_state {
 };
 
 struct board {
-  int         total_bombs         ;
-  int         total_uncovered     ;
+  int         uncovered           ;
   cell        cells[CELLS*CELLS]  ;
 };
 

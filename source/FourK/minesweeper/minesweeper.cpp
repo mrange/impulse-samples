@@ -68,20 +68,11 @@ extern "C" {
     return lcg_state;
   }
 
-  #pragma code_seg(".lcg_rand_float")
-  float lcg_rand_float() {
-    float const inv = 0.25/(1<<30);
-    double v = inv*lcg_rand_uint32();
-    assert(v >= 0.);
-    assert(v <= 1.);
-    return static_cast<float>(v);
-  }
-
   #pragma code_seg(".reset_board")
   void reset_board(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_BOARD 0x2258
+    #define SZ_OF_BOARD 0x2254
     static_assert(SZ_OF_BOARD == sizeof(board), "The sizeof(board) and SZ_OF_BOARD must be the same");
     _asm {
       LEA edi, [game.board]
@@ -94,49 +85,54 @@ extern "C" {
     memset(&game.board, 0, sizeof(board));
 #endif
 
-    auto total_bombs  = 0;
-    auto offy         = 0;
+    auto remaining_bombs = BOMBS_PER_BOARD;
+    while (remaining_bombs > 0) {
+      auto x = lcg_rand_uint32()%CELLS;
+      auto y = lcg_rand_uint32()%CELLS;
+      auto i = CELLS*y+x;
+      assert(i >= 0);
+      assert(i < CELLS*CELLS);
+      auto & cell = game.board.cells[i];
+      if (cell.has_bomb) {
+        continue;
+      }
+
+      cell.has_bomb = true;
+      --remaining_bombs;
+    }
 
     for (auto y = 0; y < CELLS; ++y) {
       for (auto x = 0; x < CELLS; ++x) {
-        auto off          = x + offy;
-        auto & cell       = game.board.cells[off];
-        auto rand         = lcg_rand_float();
-        cell.x            = x;
-        cell.y            = y;
+        auto i            = x + y*CELLS;
+        assert(i >= 0);
+        assert(i < CELLS*CELLS);
+        auto & cell       = game.board.cells[i];
         cell.state        = cell_state::covered_empty;
         cell.next_state   = cell_state::covered_empty;
-        if (rand < 0.1F) {
-          cell.has_bomb   = true;
-          ++total_bombs;
-        }
         cell.changed_time = time;
-      }
-      offy += CELLS;
-    }
-    game.board.total_bombs = total_bombs;
 
-    for (auto & cell : game.board.cells) {
-      auto near_bombs   = 0;
-      auto near_i       = 0;
-      for (auto yy = -1; yy <= 1; ++yy) {
-        auto near_y     = cell.y+yy;
-        for (auto xx = -1; xx <= 1; ++xx) {
-          auto near_x   = cell.x+xx;
-          auto near_off = near_y*CELLS+near_x;
-          auto hit_mid = xx == 0 && yy == 0;
-          if (!hit_mid && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
-            auto & near_cell        = game.board.cells[near_off];
-            assert(near_off >= 0);
-            assert(near_off < CELLS*CELLS);
-            cell.near_cells[near_i] = &near_cell;
-            ++near_i;
-            if (near_cell.has_bomb) ++near_bombs;
+        auto near_bombs   = 0;
+        auto near_cells   = 0;
+
+        for (auto yy = -1; yy <= 1; ++yy) {
+          auto near_y     = y+yy;
+          for (auto xx = -1; xx <= 1; ++xx) {
+            auto near_x   = x+xx;
+            auto near_i   = near_y*CELLS+near_x;
+            auto hit_mid = xx == 0 && yy == 0;
+            if (!hit_mid && near_y >= 0 && near_y < CELLS && near_x >= 0 && near_x < CELLS) {
+              assert(near_i >= 0);
+              assert(near_i < CELLS*CELLS);
+              auto & near_cell            = game.board.cells[near_i];
+              cell.near_cells[near_cells] = &near_cell;
+              ++near_cells;
+              if (near_cell.has_bomb) ++near_bombs;
+            }
+            assert(near_cells <= 8);
           }
-          assert(near_i <= 8);
         }
+        cell.near_bombs = near_bombs;
       }
-      cell.near_bombs = near_bombs;
     }
   }
   
@@ -144,7 +140,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x226C
+    #define SZ_OF_GAME 0x2260
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -183,6 +179,8 @@ extern "C" {
     s[3]        = game.game_time;
     s[4]        = m_x;
     s[5]        = m_y;
+    s[6]        = static_cast<GLfloat>(game.completed_boards);
+    s[7]        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
 
     auto mp_x   = (-res_x+2.F*m_x)/res_y;
     auto mp_y   = -(-res_y+2.F*m_y)/res_y;
@@ -276,8 +274,8 @@ extern "C" {
               cell.next_state = cell_state::exploding;
               game.game_state = game_state::game_over;
             } else {
-              ++game.board.total_uncovered;
-              if (game.board.total_bombs + game.board.total_uncovered >= CELLS*CELLS) {
+              ++game.board.uncovered;
+              if (BOMBS_PER_BOARD + game.board.uncovered >= CELLS*CELLS) {
                 game.game_state = game_state::resetting_board;
               }
               cell.next_state = cell_state::uncovered;
