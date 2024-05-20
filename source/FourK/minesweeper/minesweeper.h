@@ -16,7 +16,7 @@
 
 #pragma once
 
-// #define NOCRT
+#define NOCRT
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -162,7 +162,7 @@ extern "C" {
       , 0                                   // hCursor
       , 0                                   // hbrBackground
       , 0                                   // lpszMenuName
-      , "W4K"                               // lpszClassName
+      , "Minesweeper2024"                   // lpszClassName
   };
 
   #pragma data_seg(".waveFormatSpecification")
@@ -188,11 +188,6 @@ extern "C" {
   , 0                                   // reserved
   };
 
-  #pragma data_seg(".waveTime")
-  MMTIME waveTime {
-    TIME_SAMPLES
-  , 0
-  };
 
   #pragma data_seg(".glCreateShaderProgramv")
   char const nm_glCreateShaderProgramv[] = "glCreateShaderProgramv";

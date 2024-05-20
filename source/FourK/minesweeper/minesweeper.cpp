@@ -69,18 +69,11 @@ extern "C" {
     return static_cast<uint32_t>(v >> 32);
   }
 
-  enum class traverse_state {
-    left_to_right = 0
-  , top_to_bottom = 1
-  , right_to_left = 2
-  , bottom_to_top = 3
-  };
-
   #pragma code_seg(".reset_board")
   void reset_board(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_BOARD 0x2254
+    #define SZ_OF_BOARD 0x1DD4
     static_assert(SZ_OF_BOARD == sizeof(board), "The sizeof(board) and SZ_OF_BOARD must be the same");
     _asm {
       LEA edi, [game.board]
@@ -173,7 +166,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x2260
+    #define SZ_OF_GAME 0x1DE8
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -474,6 +467,9 @@ int __cdecl main() {
   );
   assert(hwnd);
 
+  auto setTextOk = SetWindowTextA(hwnd, windowClassSpecification.lpszClassName);
+  assert(setTextOk);
+
   // We need the Device Context to do Windows graphics
   auto hdc = GetDC(hwnd);
   assert(hdc);
@@ -577,9 +573,11 @@ int __cdecl main() {
     auto time = GetTickCount() / 1000.F;
     switch (game.game_state) {
       case game_state::resetting_game:
+        printf("Resetting game with seed: 0x%x\n", lcg_state);
         reset_game(time);
         break;
       case game_state::resetting_board:
+        printf("Resetting game with board: 0x%x\n", lcg_state);
         reset_board(time);
         ++game.completed_boards;
         game.game_state = game_state::playing;
@@ -587,16 +585,6 @@ int __cdecl main() {
     }
 
     // Windows message handling done, let's draw some gfx
-
-    // Get current wave position
-    auto waveGetPosOk = waveOutGetPosition(hwo, &waveTime, sizeof(MMTIME));
-    assert(waveGetPosOk == MMSYSERR_NOERROR);
-
-    // Have we passed the end sample? If so then restart music
-    auto currentSample = waveTime.u.sample;
-    if (currentSample >= SU_LENGTH_IN_SAMPLES) {
-      // TODO: Restart music
-    }
 
     // Draw the game
     draw_game(time);
