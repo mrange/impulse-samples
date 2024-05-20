@@ -48,11 +48,19 @@ const float
   , deps            = .1
   ;
 
-const vec2 
-    ddim  = vec2(.75, .075)
+vec2 
+    ddim      = vec2(.75, .075)
+  , states[6] = vec2[](
+      vec2(0  ,0)
+    , vec2(.5 ,0)
+    , vec2(2  ,2)
+    , vec2(10 ,0)
+    , vec2(10 ,2)
+    , vec2(4  ,1)
+    )
   ;
 
-const int[16] ddigits = int[16](
+int ddigits[16] = int[](
     0x7D // 0
   , 0x50 // 1
   , 0x4F // 2
@@ -170,16 +178,6 @@ void main() {
     , tcp = p
     ;
 
-  mp.y     = -mp.y;
-  vec3 
-      col = vec3(0.)
-    , p3  = vec3(p, 0.)
-    , mp3 = vec3(mp, 1.)
-    , rd3 = normalize(p3-vec3(0,0,10.))
-    , ld3 = normalize(mp3-p3)
-    , ld0 = normalize(vec3(2.,3.,3.))
-    ;
-
   float 
       tm  = state[0].x
     , gtm = state[0].w
@@ -189,6 +187,16 @@ void main() {
     , faa = aa/(fz*cz)
     ;
 
+  mp.y     = -mp.y;
+  vec3 
+      col = vec3(0)
+    , p3  = vec3(p, 0)
+    , mp3 = vec3(mp, 1)
+    , rd3 = normalize(p3-vec3(0,0,10))
+    , ld3 = normalize(mp3-p3)
+    , ld0 = normalize(vec3(2,3,3))
+    , mouseCol  = sqrt(palette(tm))
+    ;
 
   cp /= cz;
   cp -= .5;
@@ -207,45 +215,43 @@ void main() {
   tcp /= tz;
 
   float fi = (np.x)+(np.y)*CELLS+STATE_SIZE;
-  vec4 c = state[int(fi)];
-
-  float 
-      cs  = c.x
-    , mts = c.z
-    , d1  = circle8(cp, 0.45);
-    ;
-  
-    
-  vec3 
-      n         = norm8(cp, 0.45-1/80.)
-    , mouseCol  = sqrt(palette(tm))
-    ;
-  float fre = 1+dot(n, rd3);
+      
+  if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
+    float d = mod(gtm*pow(10, tnp.x), 10);
+    vec3 
+        acol = palette(-4.*p.y+(tnp.x < 1 ? 0:3))
+      , icol = acol*.075
+      ;
+    col = digit(col, tcp, acol, icol, taa, d, 1);
+  }
 
   if (max(abs(p0).x, abs(p0).y) < BORDER_DIM) {
+    vec4 c = state[int(fi)];
+    
+    float 
+        cs  = c.x
+      , mts = c.z
+      , d1  = circle8(cp, 0.45);
+      ;
+      
+    vec3 
+        n     = norm8(cp, 0.45-1/80.)
+      , ccol  = col/4
+      ; 
+    float fre = 1+dot(n, rd3);
 
-    vec3 ccol = col/4; 
+
 
     float 
         spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0.), 20)/4
       , spe3 = pow(max(dot(ld3, reflect(rd3, n)), 0.), 40)
       ;
 
-    const vec2 states[6] = vec2[6](
-      vec2(0  ,0)
-    , vec2(.5 ,0)
-    , vec2(2  ,2)
-    , vec2(10 ,0)
-    , vec2(10 ,2)
-    , vec2(4  ,1)
-    );
-    
     vec2 state = states[int(cs)];
     float gd = length(cp);
     for (float yy = 0; yy < state.y; ++yy) {
       gd = min(abs(gd-0.1), gd);
     }
-//    if (state.y > 0)  gd = ;
     vec3 scol =(0.2+palette(2-cs))*(state.x*5E-3/max(gd, 3E-3));
     
     ccol = mix(ccol, scol, smoothstep(caa, -caa, d1));      
@@ -269,17 +275,7 @@ void main() {
     col = mix(col, mix(vec3(1.), gcol/3, smoothstep(mts+1/8., mts+.5, tm)), smoothstep(caa, -caa, d1));
   }
 
-  if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
-    float d = mod(gtm*pow(10, tnp.x), 10);
-    vec3 
-        acol = palette(-4.*p.y+(tnp.x < 1 ? 0:3))
-      , icol = acol*.075
-      ;
-    col = digit(col, tcp, acol, icol, taa, d, 1);
-  }
-
   col += mouseCol*(1E-3/max(length(p-mp), 1E-3)); 
 
   fcol = vec4(sqrt(tanh(col)), 1);
 }
-
