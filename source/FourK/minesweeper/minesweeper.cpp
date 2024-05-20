@@ -401,10 +401,10 @@ extern "C" {
 }
 
 #pragma code_seg(".main")
-#ifdef USE_CRINKLER
-void entrypoint() {
-#else
+#ifdef _DEBUG
 int __cdecl main() {
+#else
+void entrypoint() {
 #endif
 /*
   auto dpiAware = SetProcessDPIAware();
@@ -587,10 +587,10 @@ int __cdecl main() {
   // We are done, just exit. No need to waste bytes on cleaning
   //  up resources. Windows will do it for us.
 
-#ifdef USE_CRINKLER
-  ExitProcess(0);
-#else
+#ifdef _DEBUG
   return 0;
+#else
+  ExitProcess(0);
 #endif
 }
 

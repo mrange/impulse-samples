@@ -9,6 +9,7 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release - CRINKLER|x86 = Release - CRINKLER|x86
+		Release - No STDLIB|x86 = Release - No STDLIB|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
@@ -16,6 +17,8 @@ Global
 		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Debug|x86.Build.0 = Debug|Win32
 		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Release - CRINKLER|x86.ActiveCfg = Release - CRINKLER|Win32
 		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Release - CRINKLER|x86.Build.0 = Release - CRINKLER|Win32
+		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Release - No STDLIB|x86.ActiveCfg = Release - No STDLIB|Win32
+		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Release - No STDLIB|x86.Build.0 = Release - No STDLIB|Win32
 		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Release|x86.ActiveCfg = Release|Win32
 		{ECAA06C2-61B3-49B0-8EDA-C7D411B4D056}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection

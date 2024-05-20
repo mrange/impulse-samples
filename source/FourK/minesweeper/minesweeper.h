@@ -39,10 +39,12 @@
 #define CELL_DIM    (BORDER_DIM/(CELLS*0.5F))
 #define STATE_SLEEP 0.1F
 
-#include "assert.h"
 
 #ifdef _DEBUG
+#include "assert.h"
 #include <stdio.h>
+#else
+#define assert(x)
 #endif
 
 #include <windows.h>
