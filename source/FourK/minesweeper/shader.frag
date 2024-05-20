@@ -236,7 +236,7 @@ void main() {
       ;
 
     vec3
-        n     = norm8(cp, 0.45-1./80)
+        n     = norm8(cp, 0.45-1./80-mfo/40)
       , ccol  = col/4
       ;
     float fre = 1+dot(n, rd3);
@@ -273,7 +273,7 @@ void main() {
     ccol += (spe0+spe3*mouseCol)*fre*16*step(1, cs);
     col = mix(col, ccol, smoothstep(caa, -caa, d1));
     d1 = abs(d1)-1./80;
-    col = mix(col, mix(gcol/3,vec3(1.), mfo), smoothstep(caa, -caa, d1));
+    col = mix(col, mix(gcol/3,vec3(1), mfo), smoothstep(caa, -caa, d1));
   }
 
   col += mouseCol*(1E-3/max(length(p-mp), 1E-3));
