@@ -35,7 +35,7 @@ layout(location=0) uniform vec4[12*12+2] state;
 //  gl_FragCoord is the input fragment position
 //  fcol is the output fragment color
 
-const float 
+const float
     BORDER_DIM      = .9
   , CELL_DIM        = BORDER_DIM/(CELLS*.5)
   , PI              = acos(-1)
@@ -48,7 +48,7 @@ const float
   , deps            = .1
   ;
 
-vec2 
+vec2
     ddim      = vec2(.75, .075)
   , states[6] = vec2[](
       vec2(0  ,0)
@@ -76,8 +76,8 @@ int ddigits[16] = int[](
   , 0x2D // C
   , 0x5E // D
   , 0x2F // E
-  , 0x2B // F  
-  ); 
+  , 0x2B // F
+  );
 
 float circle8(vec2 p, float r) {
   p *= p;
@@ -103,12 +103,12 @@ vec3 norm8(vec2 p, float r) {
     return vec3(0,0,1);
   }
 }
-  
-  
+
+
 float segmentx(vec2 p, vec2 dim) {
   p.x = abs(p.x);
   float o = max(dim.x-dim.y, 0)/2;
-  return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;  
+  return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;
 }
 
 vec3 palette(float a) {
@@ -124,7 +124,7 @@ vec2 mod2(inout vec2 p, vec2 size) {
 }
 
 vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
-  vec2 
+  vec2
       ap = abs(p)
     , cp = p-.5
     , cn = round(cp)
@@ -133,7 +133,7 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
     , n1 = sign(p1)
     , p2 = p
     ;
-    
+
   if (ap.x > (.5+ddim.y+deps)||ap.y > (1+ddim.y+deps)) return col;
 
   p0.y -= 1;
@@ -143,12 +143,12 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
   p1 = abs(p1);
   p1 = p1.yx;
   p1 -= .5;
-  
+
   p2.y  = abs(p.y);
   p2.y  -= .5;
   p2    = abs(p2);
 
-  float 
+  float
       d0  = segmentx(p0, ddim)
     , d1  = segmentx(p1, ddim)
     , d2  = dot(normalize(vec2(1, -1)), p2)
@@ -162,14 +162,14 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
   int digit = ddigits[int(m)];
 
   // Praying bit shift operations aren't TOO slow
-  vec3 scol = ((digit & (1 << int(s))) == 0) ? icol : acol;  
+  vec3 scol = ((digit & (1 << int(s))) == 0) ? icol : acol;
 
   col = mix(col, scol, smoothstep(aa, -aa, d)*t);
   return col;
 }
 
 void main() {
-  vec2  
+  vec2
       res = state[0].yz
     , p   = (-res+2*gl_FragCoord.xy)/res.yy
     , mp  = (-res+2*state[1].xy)/res.yy
@@ -178,7 +178,7 @@ void main() {
     , tcp = p
     ;
 
-  float 
+  float
       tm  = state[0].x
     , gtm = state[0].w
     , aa  = sqrt(2) / res.y
@@ -188,7 +188,7 @@ void main() {
     ;
 
   mp.y     = -mp.y;
-  vec3 
+  vec3
       col = vec3(0)
     , p3  = vec3(p, 0)
     , mp3 = vec3(mp, 1)
@@ -204,7 +204,7 @@ void main() {
   tcp.x -= -tcw*tr/2;
   tcp.y -= -.95;
 
-  vec2 
+  vec2
       tnp = mod2(tcp, vec2(tr*tcw, tcw))
     , np = round(cp)
     ;
@@ -215,10 +215,10 @@ void main() {
   tcp /= tz;
 
   float fi = (np.x)+(np.y)*CELLS+STATE_SIZE;
-      
+
   if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
     float d = mod(gtm*pow(10, tnp.x), 10);
-    vec3 
+    vec3
         acol = palette(-4.*p.y+(tnp.x < 1 ? 0:3))
       , icol = acol*.075
       ;
@@ -227,40 +227,41 @@ void main() {
 
   if (max(abs(p0).x, abs(p0).y) < BORDER_DIM) {
     vec4 c = state[int(fi)];
-    
-    float 
+
+    float
         cs  = c.x
       , mts = c.z
-      , d1  = circle8(cp, 0.45);
+      , d1  = circle8(cp, 0.45)
+      , mfo = smoothstep(mts+1./2, mts+1./8, tm)
       ;
-      
-    vec3 
-        n     = norm8(cp, 0.45-1/80.)
+
+    vec3
+        n     = norm8(cp, 0.45-1./80)
       , ccol  = col/4
-      ; 
+      ;
     float fre = 1+dot(n, rd3);
 
 
 
-    float 
+    float
         spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0.), 20)/4
       , spe3 = pow(max(dot(ld3, reflect(rd3, n)), 0.), 40)
       ;
 
     vec2 state = states[int(cs)];
-    float gd = length(cp);
+    float gd = abs(length(cp)-.1*mfo);
     for (float yy = 0; yy < state.y; ++yy) {
-      gd = min(abs(gd-0.1), gd);
+      gd = min(abs(gd-.1), gd);
     }
     vec3 scol =(0.2+palette(2-cs))*(state.x*5E-3/max(gd, 3E-3));
-    
-    ccol = mix(ccol, scol, smoothstep(caa, -caa, d1));      
+
+    ccol = mix(ccol, scol, smoothstep(caa, -caa, d1));
 
     if (cs < 0) {
       vec2 fcp = cp/fz;
       fcp.x += -fcp.y/8;
-      vec3 
-          acol = palette(cs/2-.5*fcp.y)
+      vec3
+          acol = palette(cs/2-fcp.y/2)
         , icol = acol/20
         ;
 //      ccol += acol*1E-2/max(length(fcp), 5E-1);
@@ -271,11 +272,11 @@ void main() {
 
     ccol += (spe0+spe3*mouseCol)*fre*16*step(1, cs);
     col = mix(col, ccol, smoothstep(caa, -caa, d1));
-    d1 = abs(d1)-1/80.;
-    col = mix(col, mix(vec3(1.), gcol/3, smoothstep(mts+1/8., mts+.5, tm)), smoothstep(caa, -caa, d1));
+    d1 = abs(d1)-1./80;
+    col = mix(col, mix(gcol/3,vec3(1.), mfo), smoothstep(caa, -caa, d1));
   }
 
-  col += mouseCol*(1E-3/max(length(p-mp), 1E-3)); 
+  col += mouseCol*(1E-3/max(length(p-mp), 1E-3));
 
   fcol = vec4(sqrt(tanh(col)), 1);
 }
