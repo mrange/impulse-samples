@@ -70,7 +70,7 @@ extern "C" {
 
   #pragma code_seg(".lcg_rand_float")
   float lcg_rand_float() {
-    const double inv = 0.25/(1<<30);
+    float const inv = 0.25/(1<<30);
     double v = inv*lcg_rand_uint32();
     assert(v >= 0.);
     assert(v <= 1.);
@@ -81,7 +81,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x2414
+    #define SZ_OF_GAME 0x2418
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -143,18 +143,22 @@ extern "C" {
 
   #pragma code_seg(".draw_game")
   void draw_game(float time) {
-    const int size = sizeof(state)/sizeof(GLfloat);
+    int const size  = sizeof(state)/sizeof(GLfloat);
     auto g_t        = time-game.start_time;
     auto r_x        = static_cast<GLfloat>(res_x);
     auto r_y        = static_cast<GLfloat>(res_y);
     auto m_x        = static_cast<GLfloat>(mouse_x);
     auto m_y        = static_cast<GLfloat>(mouse_y);
 
+    if (game.game_state == game_state::playing)
+      game.game_time  = g_t;
+
     // Setup state
     GLfloat* s  = state;
     s[0]        = g_t;
     s[1]        = r_x;
     s[2]        = r_y;
+    s[3]        = game.game_time;
     s[4]        = m_x;
     s[5]        = m_y;
 

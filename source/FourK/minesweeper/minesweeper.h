@@ -87,6 +87,7 @@ enum class game_state {
 
 struct game {
   float       start_time          ;
+  float       game_time           ;
   int         total_bombs         ;
   int         total_revealed      ;
   float       next_state_advance  ;

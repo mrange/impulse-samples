@@ -182,6 +182,7 @@ void main() {
 
   float 
       tm  = state[0].x
+    , gtm = state[0].w
     , aa  = sqrt(2) / res.y
     , caa = aa/cz
     , taa = aa/tz
@@ -269,7 +270,7 @@ void main() {
   }
 
   if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
-    float d = mod(tm*pow(10, tnp.x), 10);
+    float d = mod(gtm*pow(10, tnp.x), 10);
     vec3 
         acol = palette(-4.*p.y+(tnp.x < 1 ? 0:3))
       , icol = acol*.075
