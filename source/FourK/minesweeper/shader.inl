@@ -21,7 +21,7 @@
  "}"
  "vec2 p(inout vec2 v)"
  "{"
-   "vec2 x=vec2(.075,.2),y=floor((v+x/2)/x);"
+   "vec2 x=vec2(.075,.1),y=floor((v+x/2)/x);"
    "v=mod(v+x/2,x)-x/2;"
    "return y;"
  "}"

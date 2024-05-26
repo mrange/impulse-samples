@@ -153,7 +153,7 @@ vec3 digit(vec2 p, vec3 acol, vec3 icol, float aa, float n) {
     , p2 = p
     ;
 
-  if (ap.x > (.5+ddim.y+deps)||ap.y > (1+ddim.y+deps)) return vec3(0.);
+  if (ap.x > (.5+ddim.y+deps)||ap.y > (1+ddim.y+deps)) return vec3(0);
 
   p0.y -= 1;
   float n0 = round(p0.y);
@@ -272,7 +272,7 @@ void main() {
   tcp.y -= .95;
 
   vec2
-      tnp = mod2(tcp, vec2(tr*tcw, tcw*2.))
+      tnp = mod2(tcp, vec2(tr*tcw, tcw))
     , np = round(cp)
     ;
   tcp.y *= sty;

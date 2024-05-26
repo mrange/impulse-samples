@@ -161,7 +161,7 @@ extern "C" {
 
 
   }
-  
+
   #pragma code_seg(".reset_game")
   void reset_game(float time) {
 #ifdef NOCRT
@@ -227,7 +227,7 @@ extern "C" {
       MOVSS       xmm0  , mcp_x
       ROUNDSS     xmm0  , xmm0, 0
       MOVSS       mnp_x , xmm0
-    
+
       MOVSS       xmm0  , mcp_y
       ROUNDSS     xmm0  , xmm0, 0
       MOVSS       mnp_y , xmm0
@@ -279,7 +279,7 @@ extern "C" {
             case cell_state::covered_empty:
             case cell_state::covered_flag:
               // Toggle flag tile
-              cell.state = cell.next_state = cell.state == cell_state::covered_empty 
+              cell.state = cell.next_state = cell.state == cell_state::covered_empty
                 ? cell_state::covered_flag
                 : cell_state::covered_empty
                 ;
@@ -375,7 +375,7 @@ extern "C" {
     switch (uMsg) {
       // To be ignored
       case WM_SYSCOMMAND:
-        if (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER) 
+        if (wParam == SC_SCREENSAVE || wParam == SC_MONITORPOWER)
           return 0;
         break;
       // Mouse moved
@@ -574,14 +574,14 @@ int __cdecl main() {
     switch (game.game_state) {
       case game_state::resetting_game:
         // Useful for debugging potentially buggy boards
-        // lcg_state = 0xcebe0893;
+        //lcg_state = 0x1e0d6339;
         printf("Resetting game with seed: 0x%x\n", lcg_state);
         reset_game(time);
         break;
       case game_state::resetting_board:
         // Useful for debugging potentially buggy boards
-        // lcg_state = 0xcebe0893;
-        printf("Resetting game with board: 0x%x\n", lcg_state);       
+        //lcg_state = 0x1e0d6339;
+        printf("Resetting game with board: 0x%x\n", lcg_state);
         reset_board(time);
         ++game.completed_boards;
         game.game_state = game_state::playing;
