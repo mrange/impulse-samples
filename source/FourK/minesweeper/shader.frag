@@ -19,7 +19,7 @@
 // ----------------------------------------------------------------------------
 // Required prelude
 
-const int 
+const int
   CELLS       = 12
 , STATE_SIZE  = 2
 ;
@@ -61,12 +61,12 @@ vec2
   ;
 
 int ddigits[16] = int[](
-    0x7D // 0
+    0x7D // 0, O
   , 0x50 // 1
   , 0x4F // 2
   , 0x57 // 3
   , 0x72 // 4
-  , 0x37 // 5
+  , 0x37 // 5, S
   , 0x3F // 2
   , 0x51 // 7
   , 0x7F // 8
@@ -77,6 +77,8 @@ int ddigits[16] = int[](
   , 0x5E // D
   , 0x2F // E
   , 0x2B // F
+  //, 0x2B // L
+  //, 0x2B // K
   );
 
 float circle8(vec2 p, float r) {
@@ -168,6 +170,51 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
   return col;
 }
 
+// License: Unknown, author: Unknown, found: don't remember
+float hash(vec2 co) {
+  return fract(sin(dot(co.xy ,vec2(12.9898,58.233))) * 13758.5453);
+}
+
+vec3 background(vec2 p, float tm) {
+  vec3
+      col   = vec3(0)
+    , ro    = vec3(0,0,tm)
+    , rd    = normalize(vec3(p,2))
+    , ard   = abs(rd)
+    ;
+  float
+      maxDist = 1E3
+    , srdx    = sign(rd.x)
+    ;
+
+  for (int i = 1; i < 10; ++i) {
+    float tw = -(ro.x-6*sqrt(i))/ard.x;
+
+    vec3 wp = ro+rd*tw;
+
+    vec2
+        wp2 = wp.yz*2E-2
+      , wn2 = round(wp2)
+      , wc2 = wp2 - wn2
+      ;
+
+    if (hash(wn2+i+.5*sign(rd.x)) < .5) {
+      wc2 = vec2(wc2.y, -wc2.x);
+    }
+
+    float
+        fo = smoothstep(-.7, 1., sin(.1*wp.z+tm+i+srdx))
+      , wd0 = length(wc2+.5)-.5
+      , wd1 = length(wc2-.5)-.5
+      , wd  = abs(min(wd0, wd1))-.025
+      ;
+
+    col += palette(5E-2*tw+tm)*exp(-3E-3*tw*tw)*25E-4/max(abs(wd), 3E-3*fo)*fo;
+  }
+
+  return col;
+}
+
 void main() {
   vec2
       res = state[0].yz
@@ -189,7 +236,7 @@ void main() {
 
   mp.y     = -mp.y;
   vec3
-      col = vec3(0)
+      col = background(p, tm)
     , p3  = vec3(p, 0)
     , mp3 = vec3(mp, 1)
     , rd3 = normalize(p3-vec3(0,0,10))
@@ -237,7 +284,7 @@ void main() {
 
     vec3
         n     = norm8(cp, 0.45-1./80-mfo/40)
-      , ccol  = col/4
+      , ccol  = tanh(8*col)/8
       ;
     float fre = 1+dot(n, rd3);
 
@@ -253,9 +300,9 @@ void main() {
     for (float yy = 0; yy < state.y; ++yy) {
       gd = min(abs(gd-.1), gd);
     }
-    vec3 scol =(0.2+palette(2-cs))*(state.x*5E-3/max(gd, 3E-3));
+    vec3 scol =(.2+palette(2-cs))*(state.x*5E-3/max(gd, 3E-3));
 
-    ccol = mix(ccol, scol, smoothstep(caa, -caa, d1));
+    ccol += scol*smoothstep(caa, -caa, d1);
 
     if (cs < 0) {
       vec2 fcp = cp/fz;
