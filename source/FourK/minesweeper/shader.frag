@@ -46,6 +46,20 @@ const float
   , cz              = CELL_DIM
   , tr              = .75
   , deps            = .1
+  , textChars[12]   = float[](
+        5   // S
+      , 12  // C
+      , 0   // O
+      , 17  // R
+      , 14  // E
+      , 19  // BLANK
+      , 16  // L
+      , 14  // E
+      , 15  // F
+      , 18  // T
+      , 19  // BLANK
+      , 19  // BLANK
+      )
   ;
 
 vec2
@@ -60,7 +74,7 @@ vec2
     )
   ;
 
-int ddigits[16] = int[](
+int ddigits[20] = int[](
     0x7D // 0, O
   , 0x50 // 1
   , 0x4F // 2
@@ -77,9 +91,24 @@ int ddigits[16] = int[](
   , 0x5E // D
   , 0x2F // E
   , 0x2B // F
-  //, 0x2B // L
-  //, 0x2B // K
-  );
+  , 0x2C // L
+  , 0xFB // R
+  , 0x29 // T
+  , 0x00 // BLANK
+  )
+  ;
+
+vec3 palette(float a) {
+  return 1+sin(vec3(-4,3,1)/2+a);
+}
+
+
+// License: MIT OR CC-BY-NC-4.0, author: mercury, found: https://mercury.sexy/hg_sdf/
+vec2 mod2(inout vec2 p, vec2 size) {
+  vec2 c = floor((p + size/2)/size);
+  p = mod(p + size/2,size) - size/2;
+  return c;
+}
 
 float circle8(vec2 p, float r) {
   p *= p;
@@ -113,19 +142,7 @@ float segmentx(vec2 p, vec2 dim) {
   return (p.x < o ? abs(p.y) : length(p-vec2(o, 0)))-dim.y;
 }
 
-vec3 palette(float a) {
-  return 1+sin(vec3(-4,3,1)/2+a);
-}
-
-
-// License: MIT OR CC-BY-NC-4.0, author: mercury, found: https://mercury.sexy/hg_sdf/
-vec2 mod2(inout vec2 p, vec2 size) {
-  vec2 c = floor((p + size/2)/size);
-  p = mod(p + size/2,size) - size/2;
-  return c;
-}
-
-vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
+vec3 digit(vec2 p, vec3 acol, vec3 icol, float aa, float n) {
   vec2
       ap = abs(p)
     , cp = p-.5
@@ -136,7 +153,7 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
     , p2 = p
     ;
 
-  if (ap.x > (.5+ddim.y+deps)||ap.y > (1+ddim.y+deps)) return col;
+  if (ap.x > (.5+ddim.y+deps)||ap.y > (1+ddim.y+deps)) return vec3(0.);
 
   p0.y -= 1;
   float n0 = round(p0.y);
@@ -166,8 +183,7 @@ vec3 digit(vec3 col, vec2 p, vec3 acol, vec3 icol, float aa, float n, float t) {
   // Praying bit shift operations aren't TOO slow
   vec3 scol = ((digit & (1 << int(s))) == 0) ? icol : acol;
 
-  col = mix(col, scol, smoothstep(aa, -aa, d)*t);
-  return col;
+  return scol*smoothstep(aa, -aa, d);
 }
 
 // License: Unknown, author: Unknown, found: don't remember
@@ -228,15 +244,18 @@ void main() {
   float
       tm  = state[0].x
     , gtm = state[0].w
+    , sco = state[1].z
+    , rem = state[1].w
     , aa  = sqrt(2) / res.y
     , caa = aa/cz
     , taa = aa/tz
     , faa = aa/(fz*cz)
+    , sty = sign(tcp.y)
     ;
 
   mp.y     = -mp.y;
   vec3
-      col = background(p, tm)
+      col = background(p, tm*.5)
     , p3  = vec3(p, 0)
     , mp3 = vec3(mp, 1)
     , rd3 = normalize(p3-vec3(0,0,10))
@@ -249,13 +268,14 @@ void main() {
   cp -= .5;
 
   tcp.x -= -tcw*tr/2;
-  tcp.y -= -.95;
+  tcp.y = abs(tcp.y);
+  tcp.y -= .95;
 
   vec2
-      tnp = mod2(tcp, vec2(tr*tcw, tcw))
+      tnp = mod2(tcp, vec2(tr*tcw, tcw*2.))
     , np = round(cp)
     ;
-
+  tcp.y *= sty;
   cp -= np;
   np += CELLS/2;
 
@@ -263,13 +283,15 @@ void main() {
 
   float fi = (np.x)+(np.y)*CELLS+STATE_SIZE;
 
-  if (tnp.y == 0 && abs(tnp.x-.5) < 5) {
-    float d = mod(gtm*pow(10, tnp.x), 10);
+  if (tnp.y == 0 && abs(tnp.x-.5) < 6) {
+    float
+      v = sty > 0 ? rem : sco
+    , d = tnp.x > 0 ? mod(v*pow(10, tnp.x-6), 10) : textChars[int(tnp.x+5+3*(sty+1.))];
     vec3
-        acol = palette(-4.*p.y+(tnp.x < 1 ? 0:3))
+        acol = palette(2.5+1.5*sty+0.4*tcp.y+(tnp.x < 1 ? 0:3))
       , icol = acol*.075
       ;
-    col = digit(col, tcp, acol, icol, taa, d, 1);
+    col += digit(tcp, acol, icol, taa, d);
   }
 
   if (max(abs(p0).x, abs(p0).y) < BORDER_DIM) {
@@ -302,17 +324,20 @@ void main() {
     }
     vec3 scol =(.2+palette(2-cs))*(state.x*5E-3/max(gd, 3E-3));
 
-    ccol += scol*smoothstep(caa, -caa, d1);
 
-    if (cs < 0) {
+    if (cs < 1) {
       vec2 fcp = cp/fz;
       fcp.x += -fcp.y/8;
       vec3
           acol = palette(cs/2-fcp.y/2)
         , icol = acol/20
         ;
-//      ccol += acol*1E-2/max(length(fcp), 5E-1);
-      ccol = digit(ccol, fcp, acol, icol, faa, -cs, 1);
+      if (cs < 0) {
+//        ccol += acol*1E-2/max(length(fcp), 5E-1);
+        ccol += digit(fcp, acol, icol, faa, -cs);
+      }
+    } else {
+      ccol   = mix(ccol, scol,smoothstep(caa, -caa, d1));
     }
 
     vec3 gcol = palette(3.5-p.y);

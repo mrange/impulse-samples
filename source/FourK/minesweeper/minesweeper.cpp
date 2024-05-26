@@ -205,7 +205,7 @@ extern "C" {
     s[3]        = game.game_time;
     s[4]        = m_x;
     s[5]        = m_y;
-    s[6]        = static_cast<GLfloat>(game.completed_boards);
+    s[6]        = static_cast<GLfloat>(game.game_time*10.F);
     s[7]        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
 
     auto mp_x   = (-res_x+2.F*m_x)/res_y;
@@ -573,11 +573,15 @@ int __cdecl main() {
     auto time = GetTickCount() / 1000.F;
     switch (game.game_state) {
       case game_state::resetting_game:
+        // Useful for debugging potentially buggy boards
+        // lcg_state = 0xcebe0893;
         printf("Resetting game with seed: 0x%x\n", lcg_state);
         reset_game(time);
         break;
       case game_state::resetting_board:
-        printf("Resetting game with board: 0x%x\n", lcg_state);
+        // Useful for debugging potentially buggy boards
+        // lcg_state = 0xcebe0893;
+        printf("Resetting game with board: 0x%x\n", lcg_state);       
         reset_board(time);
         ++game.completed_boards;
         game.game_state = game_state::playing;
