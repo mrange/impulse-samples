@@ -16,7 +16,7 @@
 
 #pragma once
 
-//#define NOCRT
+#define NOCRT
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -30,7 +30,7 @@
 #define XRES        1600
 #define YRES        900
 
-//#define INIT_MUSIC
+#define INIT_MUSIC
 #define USE_SOUND_THREAD
 
 #define CELLS           12
@@ -49,6 +49,8 @@
 #define assert(x)
 #endif
 
+#include <math.h>
+
 #include <windows.h>
 #include <winuser.h>
 #include <mmsystem.h>
@@ -57,7 +59,7 @@
 #include <GL/gl.h>
 #include "glext.h"
 
-#include "uglyverse.h"
+#include "music.h"
 
 
 enum class cell_state {

@@ -225,18 +225,12 @@
     <ClCompile Include="minesweeper.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="uglyverse.yml">
+    <CustomBuild Include="music.asm">
       <FileType>Text</FileType>
-      <Command>$(SolutionDir)sointu-compile.exe -arch 386 -e h,asm -o $(ProjectDir) $(ProjectDir)uglyverse.yml</Command>
-      <Message>Sointuing the music...</Message>
-      <Outputs>$(ProjectDir)uglyverse.asm</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="uglyverse.asm">
-      <FileType>Text</FileType>
-      <Command>$(SolutionDir)nasm.exe -f win32 -o "$(IntermediateOutputPath)uglyverse.obj" "$(ProjectDir)uglyverse.asm"</Command>
+      <Command>$(SolutionDir)nasm.exe -f win32 -o "$(IntermediateOutputPath)music.obj" "$(ProjectDir)music.asm"</Command>
       <Message>Assembling cool music...</Message>
-      <Outputs>$(IntermediateOutputPath)uglyverse.obj</Outputs>
-      <AdditionalInputs>$(ProjectDir)uglyverse.h</AdditionalInputs>
+      <Outputs>$(IntermediateOutputPath)music.obj</Outputs>
+      <AdditionalInputs>$(ProjectDir)music.h</AdditionalInputs>
       <LinkObjects>true</LinkObjects>
     </CustomBuild>
     <CustomBuild Include="shader.frag">
@@ -249,7 +243,7 @@
   <ItemGroup>
     <ClInclude Include="minesweeper.h" />
     <ClInclude Include="glext.h" />
-    <ClInclude Include="uglyverse.h" />
+    <ClInclude Include="music.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

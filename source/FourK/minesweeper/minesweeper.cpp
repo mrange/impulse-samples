@@ -19,8 +19,6 @@
 #define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
 
-#include <math.h>
-
 extern "C" {
 
 #ifdef _DEBUG
@@ -73,7 +71,7 @@ extern "C" {
   void reset_board(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_BOARD 0x1DD4
+    #define SZ_OF_BOARD 0x2014
     static_assert(SZ_OF_BOARD == sizeof(board), "The sizeof(board) and SZ_OF_BOARD must be the same");
     _asm {
       LEA edi, [game.board]
@@ -167,7 +165,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x1DE8
+    #define SZ_OF_GAME 0x2028
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -578,13 +576,17 @@ int __cdecl main() {
       case game_state::resetting_game:
         // Useful for debugging potentially buggy boards
         //lcg_state = 0x1e0d6339;
+#ifdef _DEBUG
         printf("Resetting game with seed: 0x%x\n", lcg_state);
+#endif
         reset_game(time);
         break;
       case game_state::resetting_board:
         // Useful for debugging potentially buggy boards
         //lcg_state = 0x1e0d6339;
+#ifdef _DEBUG
         printf("Resetting game with board: 0x%x\n", lcg_state);
+#endif
         reset_board(time);
         ++game.completed_boards;
         game.game_state = game_state::playing;

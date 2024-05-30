@@ -12,7 +12,7 @@ endstruc
 ;-------------------------------------------------------------------------------
 struc su_voice
     .note       resd    1
-    .sustain    resd    1
+    .release    resd    1
     .inputs     resd    8
     .reserved   resd    6 ; this is done to so the whole voice is 2^n long, see polyphonic player
     .workspace  resb    63 * su_unit.size
@@ -57,7 +57,7 @@ endstruc
 section .synth_object bss align=256
 su_synth_obj:
     resb    su_synthworkspace.size
-    resb    27*su_delayline_wrk.size
+    resb    26*su_delayline_wrk.size
 
 
 ;-------------------------------------------------------------------------------
@@ -72,48 +72,46 @@ global _su_render_song@4
 _su_render_song@4:    
     pushad  ; Stack: edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     xor     eax, eax
-    push    85		; Stack: VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-    push    1		; Stack: RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-    push    eax		; Stack: GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+    push    1		; Stack: RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+    push    eax		; Stack: GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
 su_render_rowloop:                      ; loop through every row in the song
-        push    eax		; Stack: Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+        push    eax		; Stack: Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
         call    su_update_voices   ; update instruments for the new row
         xor     eax, eax                ; ecx is the current sample within row
 su_render_sampleloop:                   ; loop through every sample in the row
-            push    eax		; Stack: Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-            push    16256		; Stack: PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr  ; does the next voice reuse the current opcodes?
-            push    14		; Stack: VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+            push    eax		; Stack: Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+            push    112		; Stack: PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr  ; does the next voice reuse the current opcodes?
+            push    8		; Stack: VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
             mov     edx, dword su_synth_obj                       ; edx points to the synth object
-            mov     ebx, dword su_patch_opcodes           ; COM points to vm code
-            mov     esi, dword su_patch_operands             ; VAL points to unit params
+            mov     ebx, dword su_patch_code           ; COM points to vm code
+            mov     esi, dword su_patch_parameters             ; VAL points to unit params
             mov     ecx, dword su_synth_obj + su_synthworkspace.size - su_delayline_wrk.filtstate
             lea     ebp, [edx + su_synthworkspace.voices]            ; WRK points to the first voice
             call    su_run_vm ; run through the VM code
-            pop     eax      ; eax = VoicesRemain, Stack: PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-            pop     eax      ; eax = PolyphonyBitmask, Stack: Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-            mov     edi, [esp + 56] ; edi containts ptr
+            pop     eax      ; eax = VoicesRemain, Stack: PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+            pop     eax      ; eax = PolyphonyBitmask, Stack: Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+            mov     edi, [esp + 52] ; edi containts ptr
             mov     esi, dword su_synth_obj + su_synthworkspace.left
             movsd   ; copy left channel to output buffer
             movsd   ; copy right channel to output buffer
-            mov     [esp + 56], edi ; save back the updated ptr
+            mov     [esp + 52], edi ; save back the updated ptr
             lea     edi, [esi-8]
             xor     eax, eax
             stosd   ; clear left channel so the VM is ready to write them again
             stosd   ; clear right channel so the VM is ready to write them again
                     ; *ptr++ = left, *ptr++ = right
-            pop     eax      ; eax = Sample, Stack: Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+            pop     eax      ; eax = Sample, Stack: Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
             inc     dword [esp + 4] ; increment global time, used by delays
             inc     eax
             cmp     eax, 11025
             jl      su_render_sampleloop
-        pop     eax      ; eax = Row, Stack: GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr                   ; Stack: pushad ptr
+        pop     eax      ; eax = Row, Stack: GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr                   ; Stack: pushad ptr
         inc     eax
-        cmp     eax, 368
+        cmp     eax, 384
         jl      su_render_rowloop
     ; rewind the stack the entropy of multiple pop eax is probably lower than add
-    pop     eax      ; eax = GlobalTick, Stack: RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-    pop     eax      ; eax = RandSeed, Stack: VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
-    pop     eax      ; eax = VoiceTrackBitmask, Stack: edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr     
+    pop     eax      ; eax = GlobalTick, Stack: RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr 
+    pop     eax      ; eax = RandSeed, Stack: edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr     
     popad  ; Popped: eax, ecx, edx, ebx, esp, ebp, esi, edi. Stack: retaddr_su_render_song, OutputBufPtr
     ret     4
 
@@ -125,58 +123,34 @@ su_render_sampleloop:                   ; loop through every sample in the row
 ;-------------------------------------------------------------------------------
 section .su_update_voices code align=1
 su_update_voices:
-; The more complicated implementation: one track can trigger multiple voices
+; The simple implementation: each track triggers always the same voice
     xor     edx, edx
-    mov     ebx, 16                   ; we could do xor ebx,ebx; mov bl,PATTERN_SIZE, but that would limit patternsize to 256...
-    div     ebx                                 ; eax = current pattern, edx = current row in pattern
-    
-    lea     esi, [su_tracks+eax]  ; esi points to the pattern data for current track
-    xor     eax, eax                            ; eax is the first voice of next track
-    xor     ebx, ebx                            ; ebx is the first voice of current track
-    mov     ebp, dword su_synth_obj           ; ebp points to the current_voiceno array
+    xor     ebx, ebx
+    mov     bl, 16           ; rows per pattern
+    div     ebx                                 ; eax = current pattern, edx = current row in pattern    
+    lea     esi, [su_tracks+eax]; esi points to the pattern data for current track
+    mov     edi, dword su_synth_obj+su_synthworkspace.voices
+    mov     bl, 7                      ; MAX_TRACKS is always <= 32 so this is ok
 su_update_voices_trackloop:
         movzx   eax, byte [esi]                     ; eax = current pattern
-        imul    eax, 16                   ; eax = offset to current pattern data    
-        movzx   eax,byte [su_patterns + eax,edx]  ; eax = note
-        push    edx                                 ; Stack: ptrnrow
-        xor     edx, edx                            ; edx=0
-        mov     ecx, ebx                            ; ecx=first voice of the track to be done
-su_calculate_voices_loop:                           ; do {
-        bt      dword [esp + 16 + 4],ecx ; test voicetrack_bitmask// notice that the incs don't set carry
-        inc     edx                                 ;   edx++   // edx=numvoices
-        inc     ecx                                 ;   ecx++   // ecx=the first voice of next track
-        jc      su_calculate_voices_loop            ; } while bit ecx-1 of bitmask is on
-        push    ecx                                 ; Stack: next_instr ptrnrow
-        cmp     al, 1                    ; anything but hold causes action
+        imul    eax, 16           ; multiply by rows per pattern, eax = offset to current pattern data        
+        movzx   eax, byte [su_patterns + eax + edx]  ; ecx = note
+        cmp     al, 1                   ; anything but hold causes action
         je      short su_update_voices_nexttrack
-        mov     cl, byte [ebp]
-        mov     edi, ecx
-        add     edi, ebx
-        shl     edi, 12           ; each unit = 64 bytes and there are 1<<MAX_UNITS_SHIFT units + small header    
-        and     dword [su_synth_obj + su_synthworkspace.voices + su_voice.sustain + edi], 0 ; set the voice currently active to release; notice that it could increment any number of times
-        cmp     al, 1                    ; if cl < HLD (no new note triggered)
-        jl      su_update_voices_nexttrack          ;   goto nexttrack
-        inc     ecx                                 ; curvoice++
-        cmp     ecx, edx                            ; if (curvoice >= num_voices)
-        jl      su_update_voices_skipreset
-        xor     ecx,ecx                             ;   curvoice = 0
-su_update_voices_skipreset:
-        mov     byte [ebp],cl
-        add     ecx, ebx
-        shl     ecx, 12                           ; each unit = 64 bytes and there are 1<<6 units + small header
-        lea     edi,[su_synth_obj + su_synthworkspace.voices + ecx]
+        inc     dword [edi+su_voice.release]        ; set the voice currently active to release; notice that it could increment any number of times
+        jb      su_update_voices_nexttrack          ; if cl < HLD (no new note triggered)  goto nexttrack
+su_update_voices_retrigger:
         stosd                                       ; save note
-        stosd                                       ; save release
-        mov     ecx, (su_voice.size - su_voice.inputs)/4
+        mov     ecx, (su_voice.size - su_voice.release)/4  ; could be xor ecx, ecx; mov ch,...>>8, but will it actually be smaller after compression?
         xor     eax, eax
         rep stosd                                   ; clear the workspace of the new voice, retriggering oscillators
+        jmp     short su_update_voices_skipadd
 su_update_voices_nexttrack:
-        pop     ebx                                 ; ebx=first voice of next instrument, Stack: ptrnrow
-        pop     edx                                 ; edx=patrnrow
-        add     esi, 23
-        inc     ebp        
-        cmp     ebp,su_synth_obj + 9
-        jl      su_update_voices_trackloop
+        add     edi, su_voice.size
+su_update_voices_skipadd:
+        add     esi, 24
+        dec     ebx
+        jnz     short su_update_voices_trackloop
     ret
 
 ;-------------------------------------------------------------------------------
@@ -186,8 +160,8 @@ su_update_voices_nexttrack:
 ;               su_synth_obj.right  :   Set to 0 before calling
 ;               _CX                 :   Pointer to delay workspace (if needed)
 ;               _DX                 :   Pointer to synth object
-;               COM                 :   Pointer to opcode stream
-;               VAL                 :   Pointer to operand stream
+;               COM                 :   Pointer to command stream
+;               VAL                 :   Pointer to value stream
 ;               WRK                 :   Pointer to the last workspace processed
 ;   Output:     su_synth_obj.left   :   left sample
 ;               su_synth_obj.right  :   right sample
@@ -195,7 +169,7 @@ su_update_voices_nexttrack:
 ;-------------------------------------------------------------------------------
 section .su_run_vm code align=1
 su_run_vm:    
-    pushad  ; Stack: edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+    pushad  ; Stack: edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
 su_run_vm_loop:                                     ; loop until all voices done
     movzx   edi, byte [ebx]                         ; edi = command byte
     inc     ebx                                     ; move to next instruction
@@ -207,12 +181,12 @@ su_run_vm_loop:                                     ; loop until all voices done
     add     edx, su_voice.inputs
     xor     ecx, ecx                                ; counter = 0
     xor     eax, eax                                ; clear out high bits of eax, as lodsb only sets al
-su_transform_operands_loop:    
+su_transform_values_loop:    
     cmp     cl, byte [su_vm_transformcounts-1+edi]   ; compare the counter to the value in the param count table
-    je      su_transform_operands_out
-    lodsb                                           ; load the operand from VAL stream
+    je      su_transform_values_out
+    lodsb                                           ; load the byte value from VAL stream
     push    eax                                     ; push it to memory so FPU can read it
-    fild    dword [esp]                             ; load the operand value to FPU stack    
+    fild    dword [esp]                             ; load the value to FPU stack    
     fmul    dword [FCONST_0_00781250]          ; divide it by 128 (0 => 0, 128 => 1.0)
     fadd    dword [ebp+su_unit.ports+ecx*4]         ; add the modulations in the current workspace
     fstp    dword [edx+ecx*4]                       ; store the modulated value in the inputs section of voice
@@ -220,8 +194,8 @@ su_transform_operands_loop:
     mov     dword [ebp+su_unit.ports+ecx*4], eax    ; clear out the modulation ports
     pop     eax
     inc     ecx
-    jmp     su_transform_operands_loop
-su_transform_operands_out:
+    jmp     su_transform_values_loop
+su_transform_values_out:
     popf                                          ; pop flags for the carry bit = stereo bit    
     call    [su_vm_jumptable-4+edi*4]       ; call the function corresponding to the instruction
     jmp     su_run_vm_loop
@@ -241,7 +215,7 @@ su_op_advance_next_instrument:
 su_op_advance_finish:
     mov     [esp + 36], ecx
     jne     su_run_vm_loop  ; ZF was set by dec ecx    
-    popad  ; Popped: eax, ecx = DelayWorkSpace, edx = Synth, ebx = OpcodeStream, esp, ebp = Voice, esi = OperandStream, edi. Stack: retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+    popad  ; Popped: eax, ecx = DelayWorkSpace, edx = Synth, ebx = CommandStream, esp, ebp = Voice, esi = ValueStream, edi. Stack: retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     ret
 ;-------------------------------------------------------------------------------
 ;   ADDP opcode: add the two top most signals on the stack and pop
@@ -265,33 +239,17 @@ su_op_mulp:
     fmulp   st1
     ret
 
-
 ;-------------------------------------------------------------------------------
-;   HOLD opcode: sample and hold the signal, reducing sample rate
+;   XCH opcode: exchange the signals on the stack
 ;-------------------------------------------------------------------------------
-;   Mono version:   holds the signal at a rate defined by the freq parameter
-;   Stereo version: holds both channels
+;   Mono:   a b -> b a
+;   stereo: a b c d -> c d a b
 ;-------------------------------------------------------------------------------
-section .su_op_hold code align=1
-su_op_hold:
-    fld     dword [edx]    ; f x
-    fmul    st0, st0                        ; f^2 x
-    fchs                                    ; -f^2 x
-    fadd    dword [ebp]              ; p-f^2 x
-    fst     dword [ebp]              ; p <- p-f^2
-    fldz                                    ; 0 p x
-    fucomip st1                             ; p x
-    fstp    dword [esp-4]                   ; t=p, x
-    jc      short su_op_hold_holding        ; if (0 < p) goto holding
-    fld1                                    ; 1 x
-    fadd    dword [esp-4]                   ; 1+t x
-    fstp    dword [ebp]   ; x
-    fst     dword [ebp+4] ; save holded value
-    ret                                     ; x
-su_op_hold_holding:
-    fstp    st0                             ;
-    fld     dword [ebp+4] ; x
+section .su_op_xch code align=1
+su_op_xch:
+    fxch    st0, st1
     ret
+
 
 ;-------------------------------------------------------------------------------
 ;   FILTER opcode: perform low/high/band-pass/notch etc. filtering on the signal
@@ -322,25 +280,11 @@ su_op_filter:
     jz      short su_op_filter_skiplowpass
     fadd    dword [ebp]
 su_op_filter_skiplowpass:
-    test    al, byte 0x20
-    jz      short su_op_filter_skipbandpass
-    fadd    dword [ebp+8]
-su_op_filter_skipbandpass:
     test    al, byte 0x10
     jz      short su_op_filter_skiphighpass
     fadd    dword [ebp+4]
 su_op_filter_skiphighpass:
     ret
-
-;-------------------------------------------------------------------------------
-;   CLIP opcode: clips the signal into [-1,1] range
-;-------------------------------------------------------------------------------
-;   Mono:   x   ->  min(max(x,-1),1)
-;   Stereo: l r ->  min(max(l,-1),1) min(max(r,-1),1)
-;-------------------------------------------------------------------------------
-section .su_op_clip code align=1
-su_op_clip:
-    jmp     su_clip
 ;-------------------------------------------------------------------------------
 ;   PAN opcode: pan the signal
 ;-------------------------------------------------------------------------------
@@ -371,7 +315,7 @@ su_op_pan:
 section .su_op_delay code align=1
 su_op_delay:
     lodsw                           ; al = delay index, ah = delay count    
-    pushad  ; Stack: edi, DelayVal, ebp, esp, DelayCom, edx, ecx, eax, retaddr_su_op_delay, edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+    pushad  ; Stack: edi, DelayVal, ebp, esp, DelayCom, edx, ecx, eax, retaddr_su_op_delay, edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     movzx   ebx, al    
     lea     ebx,[su_delay_times + ebx*2]                  ; BX now points to the right position within delay time table
     movzx   esi, word [esp + 88]          ; notice that we load word, so we wrap at 65536
@@ -385,7 +329,7 @@ su_op_delay:
 su_op_delay_mono:               ; flow into mono delay
     call    su_op_delay_do      ; when stereo delay is not enabled, we could inline this to save 5 bytes, but I expect stereo delay to be farely popular so maybe not worth the hassle
     mov     dword [esp + 60],ecx   ; move delay workspace pointer back to stack.    
-    popad  ; Popped: eax, ecx, edx, ebx = DelayCom, esp, ebp, esi = DelayVal, edi. Stack: retaddr_su_op_delay, edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+    popad  ; Popped: eax, ecx, edx, ebx = DelayCom, esp, ebp, esi = DelayVal, edi. Stack: retaddr_su_op_delay, edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     ret
 
 ;-------------------------------------------------------------------------------
@@ -490,6 +434,12 @@ section .su_op_send code align=1
 su_op_send:
     lodsw
     mov     ecx, [esp + 12]  ; load pointer to voice
+    pushf   ; uh ugly: we save the flags just for the stereo carry bit. Doing the .CX loading later crashed the synth for stereo sends as loading the synth address from stack was f'd up by the "call su_op_send_mono"
+    test    ah, 0x80
+    jz      su_op_send_skipglobal
+    mov     ecx, [esp + 24 + 4]
+su_op_send_skipglobal:
+    popf
     test    al, 0x8             ; if the SEND_POP bit is not set
     jnz     su_op_send_skippush
     fld     st0                 ; duplicate the signal on stack: s s
@@ -512,9 +462,9 @@ su_op_send_skippush:            ; there is signal s, but maybe also another: s (
 ;-------------------------------------------------------------------------------
 section .su_op_envelope code align=1
 su_op_envelope:
-    mov     eax, dword [edx-su_voice.inputs+su_voice.sustain] ; eax = su_instrument.sustain
-    test    eax, eax                            ; if (eax != 0)
-    jne     su_op_envelope_process              ;   goto process
+    mov     eax, dword [edx-su_voice.inputs+su_voice.release] ; eax = su_instrument.release
+    test    eax, eax                            ; if (eax == 0)
+    je      su_op_envelope_process              ;   goto process
     mov     al, 3  ; [state]=RELEASE
     mov     dword [ebp], eax               ; note that mov al, XXX; mov ..., eax is less bytes than doing it directly
 su_op_envelope_process:
@@ -559,24 +509,6 @@ su_op_envelope_leave2:
     ret
 
 ;-------------------------------------------------------------------------------
-;   NOISE opcode: creates noise
-;-------------------------------------------------------------------------------
-;   Mono:   push a random value [-1,1] value on stack
-;   Stereo: push two (differeent) random values on stack
-;-------------------------------------------------------------------------------
-section .su_op_noise code align=1
-su_op_noise:
-    lea     ecx,[esp + 60]
-    imul    eax, [ecx],16007
-    mov     [ecx],eax
-    fild    dword [ecx]
-    fidiv   dword [ICONST_2147483648] ; 65536*32768
-    fld     dword [edx]
-    call    su_waveshaper
-    fmul    dword [edx + 4]
-    ret
-
-;-------------------------------------------------------------------------------
 ;   OSCILLAT opcode: oscillator, the heart of the synth
 ;-------------------------------------------------------------------------------
 ;   Mono:   push oscillator value on stack
@@ -589,7 +521,7 @@ su_op_oscillator:
     fsub    dword [FCONST_0_500000]                 ; e-.5
     fadd    st0, st0                        ; d=2*e-.5, where d is the detune [-1,1]
     
-pushad  ; Stack: edi, esi, OscWRK, esp, ebx, edx, ecx, , retaddr_su_op_oscillator, edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+pushad  ; Stack: edi, esi, OscWRK, esp, ebx, edx, ecx, , retaddr_su_op_oscillator, edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     fldz                            ; 0 d
     fxch                            ; d a=0, "accumulated signal"
 su_op_oscillat_unison_loop:
@@ -611,7 +543,7 @@ su_op_oscillat_unison_loop:
     jmp     short su_op_oscillat_unison_loop
 su_op_oscillat_unison_out:
     
-popad  ; Popped: eax = , ecx, edx, ebx, esp, ebp = OscWRK, esi, edi. Stack: retaddr_su_op_oscillator, edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+popad  ; Popped: eax = , ecx, edx, ebx, esp, ebp = OscWRK, esi, edi. Stack: retaddr_su_op_oscillator, edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     ret
 su_op_oscillat_single:
     fld     dword [edx]
@@ -635,7 +567,6 @@ su_op_oscillat_normalized:
     test    al, byte 0x80
     jz      short su_op_oscillat_not_sample
     fst     dword [ebp]  ; for samples, we store the phase without mod(p,1)
-    fadd    dword [edx + 8]
     call    su_oscillat_sample
     jmp     su_op_oscillat_shaping ; skip the rest to avoid color phase normalization and colorloading
 su_op_oscillat_not_sample:
@@ -645,22 +576,16 @@ su_op_oscillat_not_sample:
     fprem                    ; we actually computed mod(p+1,1) instead of mod(p,1) as the fprem takes mod
     fstp    st1              ; towards zero
     fst     dword [ebp] ; store back the updated phase
-    fadd    dword [edx + 8]
-    fld1                    ; this is a bit stupid, but we need to take mod(x,1) again after phase modulations
-    fadd    st1, st0        ; as the actual oscillator functions expect x in [0,1]
-    fxch
-    fprem
-    fstp    st1
     fld     dword [edx + 12]               ; // c      p
     ; every oscillator test included if needed
     test    al, byte 0x40
     jz      short su_op_oscillat_notsine
     call    su_oscillat_sine
 su_op_oscillat_notsine:
-    test    al, byte 0x10
-    jz      short su_op_oscillat_not_pulse
-    call    su_oscillat_pulse
-su_op_oscillat_not_pulse:
+    test    al, byte 0x20
+    jz      short su_op_oscillat_not_trisaw
+    call    su_oscillat_trisaw
+su_op_oscillat_not_trisaw:
 su_op_oscillat_shaping:
     ; finally, shape the oscillator and apply gain
     fld     dword [edx + 16]
@@ -669,15 +594,18 @@ su_op_oscillat_gain:
     fmul    dword [edx + 20]
     ret
 
-section .su_oscillat_pulse code align=1
-su_oscillat_pulse:
+section .su_oscillat_trisaw code align=1
+su_oscillat_trisaw:
     fucomi  st1                             ; // c      p
-    fld1
-    jnc     short su_oscillat_pulse_up      ; // +1     c       p
-    fchs                                    ; // -1     c       p
-su_oscillat_pulse_up:
-    fstp    st1                             ; // +-1    p
-    fstp    st1                             ; // +-1
+    jnc     short su_oscillat_trisaw_up
+    fld1                                    ; // 1      c       p
+    fsubr   st2, st0                        ; // 1      c       1-p
+    fsubrp  st1, st0                        ; // 1-c    1-p
+su_oscillat_trisaw_up:
+    fdivp   st1, st0                        ; // tp'/tc
+    fadd    st0                             ; // 2*''
+    fld1                                    ; // 1      2*''
+    fsubp   st1, st0                        ; // 2*''-1
     ret
 
 section .su_oscillat_sine code align=1
@@ -697,7 +625,7 @@ su_oscillat_sine_do:
 
 section .su_oscillat_sample code align=1
 su_oscillat_sample:    
-    pushad  ; Stack: SampleDi, esi, ebp, esp, SampleBx, SampleDx, SampleCx, SampleAx, retaddr_su_oscillat_sample, retaddr_su_op_oscillator, edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr                              ; edx must be saved, eax & ecx if this is stereo osc
+    pushad  ; Stack: SampleDi, esi, ebp, esp, SampleBx, SampleDx, SampleCx, SampleAx, retaddr_su_oscillat_sample, retaddr_su_op_oscillator, edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr                              ; edx must be saved, eax & ecx if this is stereo osc
     push    eax
     mov     al, byte [esi-4]                                ; reuse "color" as the sample number    
     lea     edi, [su_sample_offsets + eax*8]; edi points now to the sample table entry    
@@ -716,7 +644,7 @@ su_oscillat_sample_not_looping:
     add     edx, dword [edi]    
     fild    word [su_sample_table + edx*2]    
     fdiv    dword [FCONST_32767_0]    
-    popad  ; Popped: eax = SampleAx, ecx = SampleCx, edx = SampleDx, ebx = SampleBx, esp, ebp, esi, edi = SampleDi. Stack: retaddr_su_oscillat_sample, retaddr_su_op_oscillator, edi, OperandStream, Voice, esp, OpcodeStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, VoiceTrackBitmask, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
+    popad  ; Popped: eax = SampleAx, ecx = SampleCx, edx = SampleDx, ebx = SampleBx, esp, ebp, esi, edi = SampleDi. Stack: retaddr_su_oscillat_sample, retaddr_su_op_oscillator, edi, ValueStream, Voice, esp, CommandStream, Synth, DelayWorkSpace, eax, retaddr_su_run_vm, VoicesRemain, PolyphonyBitmask, Sample, Row, GlobalTick, RandSeed, edi, esi, ebp, esp, ebx, edx, ecx, eax, retaddr_su_render_song, OutputBufPtr
     ret
 
 ;-------------------------------------------------------------------------------
@@ -771,7 +699,7 @@ su_sample_table:
 ;   su_nonlinear_map function: returns 2^(-24*x) of parameter number _AX
 ;-------------------------------------------------------------------------------
 ;   Input:      _AX     :   parameter number (e.g. for envelope: 0 = attac, 1 = decay...)
-;               INP     :   pointer to transformed operands
+;               INP     :   pointer to transformed values
 ;   Output:     st0     :   2^(-24*x), where x is the parameter in the range 0-1
 ;-------------------------------------------------------------------------------
 section .su_nonlinear_map code align=1
@@ -834,18 +762,6 @@ su_effects_stereohelper_mono:
     ret                   ; return to process l/mono sound
 
 
-section .su_clip code align=1
-su_clip:
-    fld1                                    ; 1 x a
-    fucomi  st1                             ; if (1 <= x)
-    jbe     short su_clip_do                ;   goto Clip_Do
-    fchs                                    ; -1 x a
-    fucomi  st1                             ; if (-1 < x)
-    fcmovb  st0, st1                        ;   x x a
-su_clip_do:
-    fstp    st1                             ; x' a, where x' = clamp(x)
-    ret
-
 
 ;-------------------------------------------------------------------------------
 ; The opcode table jump table. This is constructed to only include the opcodes
@@ -855,16 +771,14 @@ section .su_vm_jumptable data align=1
 su_vm_jumptable:
     dd    su_op_envelope
     dd    su_op_oscillator
-    dd    su_op_addp
+    dd    su_op_filter
     dd    su_op_mulp
-    dd    su_op_delay
-    dd    su_op_hold
     dd    su_op_pan
     dd    su_op_outaux
-    dd    su_op_filter
+    dd    su_op_addp
+    dd    su_op_delay
+    dd    su_op_xch
     dd    su_op_send
-    dd    su_op_noise
-    dd    su_op_clip
     dd    su_op_in
     dd    su_op_out
 
@@ -875,16 +789,14 @@ section .su_vm_transformcounts data align=1
 su_vm_transformcounts:
     db    5
     db    6
+    db    2
     db    0
+    db    1
+    db    2
     db    0
     db    4
-    db    1
-    db    1
-    db    2
-    db    2
-    db    1
-    db    2
     db    0
+    db    1
     db    0
     db    1
 
@@ -894,62 +806,75 @@ su_vm_transformcounts:
 ;-------------------------------------------------------------------------------
 section .su_patterns data align=1
 su_patterns:
-    db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    db 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 45,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 46,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 42,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 44,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 77,1,69,1,77,1,69,1,77,1,69,1,77,1,69,1
     db 50,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 65,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 67,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 66,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 64,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 49,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 48,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 47,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 46,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 45,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 44,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 43,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 42,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 41,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 40,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 39,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     db 74,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 73,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 72,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 71,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     db 70,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     db 69,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 76,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 68,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 67,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 66,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 65,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 64,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 63,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 80,1,1,1,1,1,1,1,79,1,1,1,1,1,1,1
+    db 79,1,1,1,1,1,1,1,78,1,1,1,1,1,1,1
+    db 78,1,1,1,1,1,1,1,77,1,1,1,1,1,1,1
+    db 77,1,1,1,1,1,1,1,76,1,1,1,1,1,1,1
+    db 76,1,1,1,1,1,1,1,75,1,1,1,1,1,1,1
+    db 75,1,1,1,1,1,1,1,74,1,1,1,1,1,1,1
+    db 74,1,1,1,1,1,1,1,73,1,1,1,1,1,1,1
+    db 73,1,1,1,1,1,1,1,72,1,1,1,1,1,1,1
+    db 72,1,1,1,1,1,1,1,71,1,1,1,1,1,1,1
+    db 71,1,1,1,1,1,1,1,70,1,1,1,1,1,1,1
+    db 70,1,1,1,1,1,1,1,69,1,1,1,1,1,1,1
+    db 69,1,1,1,1,1,1,1,68,1,1,1,1,1,1,1
+    db 84,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 83,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 82,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 81,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 80,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 79,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 78,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     db 77,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    db 76,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     db 75,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 73,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 69,74,76,69,74,1,76,69,74,76,1,69,74,76,69,1
-    db 70,76,77,70,76,1,77,70,76,77,1,70,76,77,70,1
-    db 70,75,77,70,75,1,77,70,75,77,1,70,75,77,70,1
-    db 69,75,76,69,75,1,76,69,75,76,1,69,75,76,69,1
-    db 74,74,74,1,1,74,1,1,74,1,74,1,1,1,1,74
-    db 75,75,75,1,1,75,1,1,75,1,75,1,1,1,1,75
-    db 73,73,73,1,1,73,1,1,73,1,73,1,1,1,1,73
-    db 74,74,74,1,1,1,1,1,1,1,1,1,1,1,1,1
-    db 1,1,1,1,1,1,1,1,1,1,1,112,52,1,112,88
-    db 0,0,0,0,76,1,1,1,1,1,1,112,52,1,112,88
+    db 62,63,67,72,74,75,62,63,67,72,74,75,62,63,67,72
+    db 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
 ;-------------------------------------------------------------------------------
 ;    Tracks
 ;-------------------------------------------------------------------------------
 section .su_tracks data align=1
 su_tracks:
-    db 6,1,6,2,3,3,4,5,2,2,6,2,3,3,4,5,2,2,6,0,1,1,1
-    db 0,1,7,8,7,7,9,9,10,10,7,8,7,7,9,9,10,10,7,0,1,1,1
-    db 0,1,11,11,12,12,12,12,13,13,11,11,12,12,12,12,13,13,11,0,1,1,1
-    db 0,1,14,14,14,11,15,16,16,17,14,14,14,11,15,16,16,17,14,0,1,1,1
-    db 0,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,11,11,1,1,1
-    db 0,1,18,18,19,19,20,20,21,21,18,18,19,19,20,20,21,21,11,1,1,1,1
-    db 0,1,1,1,1,1,1,1,1,1,6,2,3,3,4,5,2,2,6,0,1,1,1
-    db 0,1,1,1,1,1,1,1,1,1,22,22,22,22,23,23,23,24,25,1,1,1,1
-    db 0,1,1,1,1,1,1,1,1,26,27,27,27,27,27,27,27,27,26,1,1,1,1
+    db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db 1,2,3,4,5,6,7,8,9,10,11,12,1,2,3,4,5,6,7,8,9,10,11,12
+    db 13,14,15,16,17,18,19,20,21,22,23,24,13,14,15,16,17,18,19,20,21,22,23,24
+    db 25,26,27,28,29,30,31,32,33,34,35,36,25,26,27,28,29,30,31,32,33,34,35,36
+    db 37,38,39,40,41,42,43,44,45,46,13,14,37,38,39,40,41,42,43,44,45,46,13,14
+    db 47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47,47
+    db 13,48,48,48,48,48,48,48,48,48,48,48,13,48,48,48,48,48,48,48,48,48,48,48
 ;-------------------------------------------------------------------------------
 ;    Sample offsets
 ;-------------------------------------------------------------------------------
 section .su_sample_offsets data align=1
 su_sample_offsets:
-    dd 515608
-    dw 800
-    dw 160
-    dd 472601
-    dw 1365
-    dw 3682
-    dd 560606
-    dw 4276
+    dd 773679
+    dw 4376
     dw 1
 
 ;-------------------------------------------------------------------------------
@@ -957,22 +882,22 @@ su_sample_offsets:
 ;-------------------------------------------------------------------------------
 section .su_delay_times data align=1
 su_delay_times:
-    dw 65535,44100,22050,1116,1188,1276,1356,1422,1492,1556,1618,1140,1212,1300,1380,1446,1516,1580,1642
+    dw 44100,33075,1116,1188,1276,1356,1422,1492,1556,1618,1140,1212,1300,1380,1446,1516,1580,1642
 
 
 ;-------------------------------------------------------------------------------
 ;    The code for this patch, basically indices to vm jump table
 ;-------------------------------------------------------------------------------
-section .su_patch_opcodes data align=1
-su_patch_opcodes:
-    db 2,4,4,6,4,6,8,10,12,14,17,4,18,20,22,12,20,0,2,4,22,18,6,8,18,10,14,17,22,18,20,0,2,4,8,10,14,17,0,2,4,8,18,14,17,2,20,0,2,4,8,10,14,17,0,2,4,22,18,6,8,24,14,17,0,27,19,11,29,0
+section .su_patch_code data align=1
+su_patch_code:
+    db 2,4,6,8,10,13,0,2,4,4,14,8,6,10,16,18,16,13,2,20,4,20,20,0,2,4,4,8,8,10,16,18,16,13,0,2,20,20,20,20,20,20,20,20,0,23,7,17,25,0
 
 ;-------------------------------------------------------------------------------
 ;    The parameters / inputs to each opcode
 ;-------------------------------------------------------------------------------
-section .su_patch_operands data align=1
-su_patch_operands:
-    db 64,64,128,84,64,75,80,0,0,64,64,131,64,64,0,64,64,47,64,76,64,0,112,64,50,64,46,128,96,0,0,1,128,64,52,80,79,64,64,64,64,27,24,5,128,64,128,59,0,64,64,0,42,168,0,2,88,0,71,35,64,69,0,16,64,128,67,128,127,115,126,32,33,61,32,82,128,96,0,1,1,54,128,128,4,128,7,22,64,128,40,0,0,71,0,64,64,46,78,0,1,64,128,131,70,128,64,0,1,1,76,38,92,0,0,128,64,64,64,72,0,64,64,64,19,0,128,64,64,86,0,0,97,56,0,128,128,72,0,0,68,0,64,64,76,74,0,64,64,64,17,64,128,96,0,2,1,42,12,86,0,82,0,0,128,86,74,33,2,64,128,131,95,6,121,42,16,48,43,82,2,42,128,16,40,128,125,64,3,15,128
+section .su_patch_parameters data align=1
+su_patch_parameters:
+    db 32,60,0,64,128,45,64,0,0,64,128,128,42,14,16,64,128,128,52,102,0,0,30,64,74,0,82,64,0,35,76,74,0,82,64,128,35,0,128,64,64,64,128,96,0,0,1,64,128,96,0,1,1,64,128,0,96,0,0,128,123,104,0,79,64,0,0,64,64,40,102,35,0,102,59,0,0,60,19,64,128,76,64,0,31,64,84,64,103,64,0,32,64,64,64,80,72,128,96,0,0,1,74,128,96,0,1,1,32,64,0,112,0,0,128,128,53,132,128,53,136,128,53,140,128,53,144,0,69,132,0,69,136,0,69,140,0,77,144,2,70,128,16,40,128,118,64,2,15,128
 
 ;-------------------------------------------------------------------------------
 ;    Constants
@@ -985,7 +910,6 @@ FCONST_3_80000em05      dd 0x381f6230
 FCONST_9_269614em05     dd 0x38c265dc
 FCONST_84_28075         dd 0x42a88fbe
 FCONST_32767_0          dd 0x46fffe00
-ICONST_2147483648       dd 0x80000000
 ICONST_1034594986       dd 0x3daaaaaa
 ICONST_24               dd 0x18
 
