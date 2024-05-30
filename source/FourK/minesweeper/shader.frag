@@ -299,7 +299,7 @@ void main() {
 
     float
         cs  = c.x
-      , mts = c.z
+      , mts = c.w
       , d1  = circle8(cp, 0.45)
       , mfo = smoothstep(mts+1./2, mts+1./8, tm)
       ;

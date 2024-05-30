@@ -108,6 +108,7 @@ extern "C" {
         assert(i >= 0);
         assert(i < CELLS*CELLS);
         auto & cell       = game.board.cells[i];
+        cell.prev_state   = cell_state::covered_empty;
         cell.state        = cell_state::covered_empty;
         cell.next_state   = cell_state::covered_empty;
         cell.changed_time = time;
@@ -199,14 +200,15 @@ extern "C" {
 
     // Setup state
     GLfloat* s  = state;
-    s[0]        = g_t;
-    s[1]        = r_x;
-    s[2]        = r_y;
-    s[3]        = game.game_time;
-    s[4]        = m_x;
-    s[5]        = m_y;
-    s[6]        = static_cast<GLfloat>(game.game_time*10.F);
-    s[7]        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
+    *s++        = g_t;
+    *s++        = r_x;
+    *s++        = r_y;
+    *s++        = game.game_time;
+    *s++        = m_x;
+    *s++        = m_y;
+    *s++        = static_cast<GLfloat>(game.game_time*10.F);
+    *s++        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
+    assert(s == state+8);
 
     auto mp_x   = (-res_x+2.F*m_x)/res_y;
     auto mp_y   = -(-res_y+2.F*m_y)/res_y;
@@ -339,6 +341,7 @@ extern "C" {
 
       for (auto & cell : game.board.cells) {
         if (cell.state != cell.next_state) {
+          cell.prev_state   = cell.state;
           cell.state        = cell.next_state;
           cell.changed_time = g_t;
         }
@@ -352,10 +355,10 @@ extern "C" {
     s           = state+4*STATE_SIZE;
     // Setup cells
     for (auto & cell : game.board.cells) {
-      s[0] = cell.state != cell_state::uncovered ? static_cast<GLfloat>(cell.state) : static_cast<GLfloat>(-cell.near_bombs);
-      s[1] = cell.changed_time;
-      s[2] = cell.mouse_time;
-      s += 4;
+      *s++ = cell.state           != cell_state::uncovered ? static_cast<GLfloat>(cell.state) : static_cast<GLfloat>(-cell.near_bombs);
+      *s++ = cell.prev_state      != cell_state::uncovered ? static_cast<GLfloat>(cell.prev_state) : static_cast<GLfloat>(-cell.near_bombs);
+      *s++ = cell.changed_time    ;
+      *s++ = cell.mouse_time      ;
     }
 
     // Use the previously compiled shader program

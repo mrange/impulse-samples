@@ -16,7 +16,7 @@
 
 #pragma once
 
-#define NOCRT
+//#define NOCRT
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -75,6 +75,7 @@ struct cell {
 
   float       changed_time        ;
   float       mouse_time          ;
+  cell_state  prev_state          ;
   cell_state  state               ;
   cell_state  next_state          ;
 
