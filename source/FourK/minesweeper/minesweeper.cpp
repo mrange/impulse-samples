@@ -372,6 +372,39 @@ extern "C" {
     glRects(-1, -1, 1, 1);
   }
 
+  #pragma code_seg(".main")
+  void play_music_from(HWND hwnd, DWORD start_pos) {
+    auto waveOpenOk = waveOutOpen(
+      &waveOut
+    , WAVE_MAPPER
+    , &waveFormatSpecification
+    , reinterpret_cast<DWORD_PTR>(hwnd)
+    , 0
+    , CALLBACK_WINDOW
+    );
+    assert(waveOpenOk == MMSYSERR_NOERROR);
+
+    auto waveResetOk = waveOutReset(waveOut);
+    assert(waveResetOk == MMSYSERR_NOERROR);
+
+    waveHeader.lpData         = reinterpret_cast<LPSTR>(waveBuffer+start_pos);
+    waveHeader.dwBufferLength = (SU_BUFFER_LENGTH - start_pos) * sizeof(SUsample);
+
+    auto wavePrepareOk = waveOutPrepareHeader(
+      waveOut
+    , &waveHeader
+    , sizeof(waveHeader)
+    );
+    assert(wavePrepareOk == MMSYSERR_NOERROR);
+
+    auto waveWriteOk = waveOutWrite(
+      waveOut
+    , &waveHeader
+    , sizeof(waveHeader)
+    );
+    assert(waveWriteOk == MMSYSERR_NOERROR);
+  }
+
   #pragma code_seg(".WndProc")
   LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     auto mx = mouse_x;
@@ -400,6 +433,10 @@ extern "C" {
       case WM_RBUTTONDOWN:
       case WM_RBUTTONUP:
         mouse_right_button = uMsg == WM_RBUTTONDOWN;
+        break;
+      case MM_WOM_DONE:
+        printf("Restart music\n");
+        play_music_from(hWnd, SU_BUFFER_LENGTH/2);
         break;
       // It's time to stop!
       case WM_CLOSE:
@@ -532,32 +569,7 @@ int __cdecl main() {
 #endif
 #endif
 
-  // Play the sound buffer
-
-  HWAVEOUT hwo;
-  auto waveOpenOk = waveOutOpen(
-    &hwo
-  , WAVE_MAPPER
-  , &waveFormatSpecification
-  , NULL
-  , 0
-  , CALLBACK_NULL
-  );
-  assert(waveOpenOk == MMSYSERR_NOERROR);
-
-  auto wavePrepareOk = waveOutPrepareHeader(
-    hwo
-  , &waveHeader
-  , sizeof(waveHeader)
-  );
-  assert(wavePrepareOk == MMSYSERR_NOERROR);
-
-  auto waveWriteOk = waveOutWrite(
-    hwo
-  , &waveHeader
-  , sizeof(waveHeader)
-  );
-  assert(waveWriteOk == MMSYSERR_NOERROR);
+  play_music_from(hwnd, 0);
 
   auto done = false;
 

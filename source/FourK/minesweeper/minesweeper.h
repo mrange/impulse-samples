@@ -40,7 +40,7 @@
 
 #define BORDER_DIM      0.9F
 #define CELL_DIM        (BORDER_DIM/(CELLS*0.5F))
-#define STATE_SLEEP     0.1F
+#define STATE_SLEEP     0.125F
 
 #ifdef _DEBUG
 #include "assert.h"
@@ -120,9 +120,18 @@ extern "C" {
   int                 mouse_right_button            ;
   struct game         game                          ;
   GLfloat             state[TOTAL_STATE]            ;
+  HWAVEOUT            waveOut                       ;
+  WAVEHDR             waveHeader                    ;
   SUsample            waveBuffer[SU_BUFFER_LENGTH]  ;
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+  #pragma data_seg(".waveTime")
+  MMTIME waveTime =
+  {
+    TIME_SAMPLES
+  , 0
+  };
 
   #pragma data_seg(".pixelFormatDescriptor")
   PIXELFORMATDESCRIPTOR pixelFormatSpecification {
@@ -178,19 +187,6 @@ extern "C" {
   , sizeof(SUsample) * 8                                  // wBitsPerSample
   , 0                                                     // cbSize
   };
-
-  #pragma data_seg(".waveHeader")
-  WAVEHDR waveHeader {
-    (LPSTR)waveBuffer                   // lpData
-  , SU_BUFFER_LENGTH * sizeof(SUsample) // dwBufferLength
-  , 0                                   // dwBytesRecorded
-  , 0                                   // dwUser
-  , 0                                   // dwFlags
-  , 0                                   // dwLoops
-  , 0                                   // lpNext
-  , 0                                   // reserved
-  };
-
 
   #pragma data_seg(".glCreateShaderProgramv")
   char const nm_glCreateShaderProgramv[] = "glCreateShaderProgramv";

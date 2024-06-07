@@ -25,7 +25,7 @@ const int
 ;
 
 const float 
-  STATE_SLEEP = 0.1
+  STATE_SLEEP = 1./8
 ;
 
 // The result of the shader
