@@ -403,7 +403,6 @@ extern "C" {
         break;
       case MM_WOM_DONE:
         {
-          printf("Restart music\n");
           waveHeader.lpData         = reinterpret_cast<LPSTR>(waveBuffer+SU_RESTART_POS);
           waveHeader.dwBufferLength = (SU_BUFFER_LENGTH-SU_RESTART_POS) * sizeof(SUsample);
           waveHeader.dwFlags        &= ~WHDR_DONE;
