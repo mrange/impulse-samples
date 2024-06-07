@@ -42,6 +42,8 @@
 #define CELL_DIM        (BORDER_DIM/(CELLS*0.5F))
 #define STATE_SLEEP     0.125F
 
+#define SU_RESTART_POS  (SU_BUFFER_LENGTH/2)
+
 #ifdef _DEBUG
 #include "assert.h"
 #include <stdio.h>
