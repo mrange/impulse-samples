@@ -206,7 +206,7 @@ extern "C" {
     *s++        = m_y;
     *s++        = static_cast<GLfloat>(game.game_time*10.F);
     *s++        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
-    assert(s == state+8);
+    assert(s == state+4*STATE_SIZE);
 
     auto mp_x   = (-res_x+2.F*m_x)/res_y;
     auto mp_y   = -(-res_y+2.F*m_y)/res_y;
@@ -358,6 +358,7 @@ extern "C" {
       *s++ = cell.changed_time    ;
       *s++ = cell.mouse_time      ;
     }
+    assert(s == state + TOTAL_STATE);
 
     // Use the previously compiled shader program
     ((PFNGLUSEPROGRAMPROC)wglGetProcAddress(nm_glUseProgram))(fragmentShaderProgram);
@@ -373,6 +374,7 @@ extern "C" {
 
   #pragma code_seg(".WndProc")
   LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    auto mx = mouse_x;
     switch (uMsg) {
       // To be ignored
       case WM_SYSCOMMAND:
@@ -601,7 +603,6 @@ int __cdecl main() {
     // Swap the buffers to present the gfx
     auto swapOk = SwapBuffers(hdc);
     assert(swapOk);
-
   }
 
   // We are done, just exit. No need to waste bytes on cleaning

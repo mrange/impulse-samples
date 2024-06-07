@@ -35,12 +35,12 @@
 
 #define CELLS           12
 #define BOMBS_PER_BOARD 16
-
 #define STATE_SIZE      2
+#define TOTAL_STATE     4*(CELLS*CELLS+STATE_SIZE)
+
 #define BORDER_DIM      0.9F
 #define CELL_DIM        (BORDER_DIM/(CELLS*0.5F))
 #define STATE_SLEEP     0.1F
-
 
 #ifdef _DEBUG
 #include "assert.h"
@@ -119,7 +119,7 @@ extern "C" {
   int                 mouse_right_button_previous   ;
   int                 mouse_right_button            ;
   struct game         game                          ;
-  GLfloat             state[CELLS*CELLS+STATE_SIZE] ;
+  GLfloat             state[TOTAL_STATE]            ;
   SUsample            waveBuffer[SU_BUFFER_LENGTH]  ;
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
