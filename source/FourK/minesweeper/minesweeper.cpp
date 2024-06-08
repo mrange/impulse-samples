@@ -165,7 +165,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x2034
+    #define SZ_OF_GAME 0x2030
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -204,10 +204,10 @@ extern "C" {
 
     // Setup state
     GLfloat* s  = state;
-    *s++        = g_t;
+    *s++        = time-application_start_time;
     *s++        = r_x;
     *s++        = r_y;
-    *s++        = game.game_time;
+    *s++        = g_t;
     *s++        = m_x;
     *s++        = m_y;
     *s++        = cs ;
@@ -272,6 +272,27 @@ extern "C" {
           // Left button released
           switch (cell.state) {
             case cell_state::uncovered:
+              {
+                int near_flags = 0;
+                for (auto ncell : cell.near_cells) {
+                  if (ncell) {
+                    if (ncell->state == cell_state::covered_flag) {
+                      ++near_flags;
+                    }
+                  }
+                }
+                if (near_flags == cell.near_bombs) {
+                  for (auto ncell : cell.near_cells) {
+                    if (ncell) {
+                      switch (ncell->state) {
+                        case cell_state::covered_empty:
+                          ncell->next_state = cell_state::uncovering;
+                          break;
+                      }
+                    }
+                  }
+                }
+              }
               break;
             case cell_state::covered_empty:
             case cell_state::covered_flag:
@@ -461,10 +482,13 @@ void entrypoint() {
 #else
 int __cdecl main() {
 #endif
+  application_start_time = GetTickCount() / 1000.F;
+
 /*
   auto dpiAware = SetProcessDPIAware();
   assert(dpiAware);
 */
+
   auto hinstance    = GetModuleHandle(0);
   assert(hinstance);
 
@@ -589,8 +613,7 @@ int __cdecl main() {
 
 #ifdef _DEBUG
   auto frame_count  = 0.F;
-  auto start_time   = GetTickCount() / 1000.F;
-  auto next_report  = start_time+1.F;
+  auto next_report  = application_start_time+1.F;
 #endif
 
    auto done = false;
@@ -612,7 +635,7 @@ int __cdecl main() {
 #ifdef _DEBUG
     ++frame_count;
     if (time >= next_report) {
-      auto fps = frame_count/(time-start_time);
+      auto fps = frame_count/(time-application_start_time);
       printf("FPS:%f\n", fps);
       next_report = 1.F+time;
     }

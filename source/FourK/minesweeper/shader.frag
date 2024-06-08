@@ -246,7 +246,7 @@ void main() {
     ;
 
   float
-      tm  = state[0].x
+      atm = state[0].x
     , gtm = state[0].w
     , sco = state[1].z
     , rem = state[1].w
@@ -259,13 +259,13 @@ void main() {
 
   mp.y     = -mp.y;
   vec3
-      col = background(p, tm*.5)
+      col = background(p, atm*.5)
     , p3  = vec3(p, 0)
     , mp3 = vec3(mp, 1)
     , rd3 = normalize(p3-vec3(0,0,10))
     , ld3 = normalize(mp3-p3)
     , ld0 = normalize(vec3(2,3,3))
-    , mouseCol  = sqrt(palette(tm))
+    , mouseCol  = sqrt(palette(atm))
     ;
 
   cp /= cz;
@@ -292,8 +292,8 @@ void main() {
 
   if (tnp.y == 0 && abs(tnp.x-.5) < 6) {
     float
-      v = sty > 0 ? rem : sco
-    , d = tnp.x > 0 ? mod(v*pow(10, tnp.x-6), 10) : textChars[int(tnp.x+5+3*(sty+1.))];
+      v = sty < 0 ? rem : sco
+    , d = tnp.x > 0 ? mod(v*pow(10, tnp.x-6), 10) : textChars[int(tnp.x+5+3*(1-sty))];
     vec3
         acol = palette(2.5+1.5*sty+0.4*tcp.y+(tnp.x < 1 ? 0:3))
       , icol = acol*.075
@@ -308,9 +308,9 @@ void main() {
         cts = c.z
       , mts = c.w
       , d1  = circle8(cp, 0.45)
-      , mfo = smoothstep(mts+1./2, mts+1./8, tm)
-      , sfo = smoothstep(cts, cts+STATE_SLEEP, tm)
-      , bfo = exp(-2*fract(tm-ml*ml/8))
+      , mfo = smoothstep(mts+1./2, mts+1./8, gtm)
+      , sfo = smoothstep(cts, cts+STATE_SLEEP, gtm)
+      , bfo = exp(-2*fract(gtm-ml*ml/8))
       ;
 
     vec3

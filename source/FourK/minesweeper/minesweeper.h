@@ -30,7 +30,7 @@
 #define XRES        1600
 #define YRES        900
 
-#define INIT_MUSIC
+//#define INIT_MUSIC
 #define USE_SOUND_THREAD
 
 #define CELLS           12
@@ -101,7 +101,6 @@ struct board {
 
 struct game {
   float       start_time          ;
-  float       game_time           ;
   float       next_state_advance  ;
   float       boards_cleared      ;
   float       lock_time           ;
@@ -124,6 +123,7 @@ extern "C" {
   int                 mouse_left_button             ;
   int                 mouse_right_button_previous   ;
   int                 mouse_right_button            ;
+  float               application_start_time        ;
   struct game         game                          ;
   GLfloat             state[TOTAL_STATE]            ;
   HWAVEOUT            waveOut                       ;
