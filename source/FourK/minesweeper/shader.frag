@@ -71,7 +71,7 @@ vec2
   , bstates[6]  = vec2[](
       vec2(0  ,0)
     , vec2(.5 ,0)
-    , vec2(2  ,2)
+    , vec2(4  ,2)
     , vec2(10 ,1)
     , vec2(10 ,2)
     , vec2(4  ,1)
@@ -285,7 +285,10 @@ void main() {
 
   tcp /= tz;
 
-  float fi = (np.x)+(np.y)*CELLS+STATE_SIZE;
+  float 
+      fi = (np.x)+(np.y)*CELLS+STATE_SIZE
+    , ml = length(mp-p)
+    ;
 
   if (tnp.y == 0 && abs(tnp.x-.5) < 6) {
     float
@@ -307,6 +310,7 @@ void main() {
       , d1  = circle8(cp, 0.45)
       , mfo = smoothstep(mts+1./2, mts+1./8, tm)
       , sfo = smoothstep(cts, cts+STATE_SLEEP, tm)
+      , bfo = exp(-2*fract(tm-ml*ml/8))
       ;
 
     vec3
@@ -326,7 +330,7 @@ void main() {
       float cs    = i == 0?c.y:c.x;
       float m     = i == 0?1-sfo:sfo;
       vec2 bstate = bstates[int(cs)];
-      float gd = abs(length(cp)-.1*mfo);
+      float gd = abs(length(cp)-.1*max(mfo, bfo));
       for (float yy = 0; yy < bstate.y; ++yy) {
         gd = min(abs(gd-.1), gd);
       }
@@ -356,7 +360,7 @@ void main() {
     col = mix(col, mix(palette(3.+p.y)/4,vec3(1), mfo), smoothstep(caa, -caa, d1));
   }
 
-  col += mouseCol*(1E-3/max(length(p-mp), 1E-3));
+  col += mouseCol*(1E-3/max(ml, 1E-3));
 
   fcol = vec4(sqrt(tanh(col)), 1);
 }

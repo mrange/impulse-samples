@@ -165,7 +165,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x2028
+    #define SZ_OF_GAME 0x2034
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -177,8 +177,9 @@ extern "C" {
 #else
     memset(&game, 0, sizeof(game));
 #endif
-    game.game_state = game_state::playing;
     game.start_time = time;
+    game.last_score = 1000.F;
+    game.game_state = game_state::playing;
 
     reset_board(time);
   }
@@ -192,9 +193,14 @@ extern "C" {
     auto m_x        = static_cast<GLfloat>(mouse_x);
     auto m_y        = static_cast<GLfloat>(mouse_y);
 
+    auto cf         = (g_t-game.lock_time)/CLEAR_DEADLINE;
+    cf              = cf > 1.F ? 1.F : cf;
+    auto cs         = game.last_score - cf*(game.last_score - game.locked_score);
+
     assert(game.game_state == game_state::playing || game.game_state == game_state::game_over);
-    if (game.game_state != game_state::game_over)
-      game.game_time  = g_t;
+    if (game.game_state == game_state::game_over) {
+      cs  = game.last_score;
+    }
 
     // Setup state
     GLfloat* s  = state;
@@ -204,7 +210,7 @@ extern "C" {
     *s++        = game.game_time;
     *s++        = m_x;
     *s++        = m_y;
-    *s++        = static_cast<GLfloat>(game.game_time*10.F);
+    *s++        = cs ;
     *s++        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
     assert(s == state+4*STATE_SIZE);
 
@@ -299,9 +305,15 @@ extern "C" {
             if (cell.has_bomb) {
               cell.next_state = cell_state::exploding;
               game.game_state = game_state::game_over;
+              game.last_score = cs;
             } else {
               ++game.board.uncovered;
               if (BOMBS_PER_BOARD + game.board.uncovered >= CELLS*CELLS) {
+                game.boards_cleared++;
+                auto new_score      = cs+1000.F*game.boards_cleared;
+                game.lock_time      = g_t;
+                game.locked_score   = new_score*0.5F > game.locked_score ? new_score*0.5F : game.locked_score;
+                game.last_score     = new_score;
                 game.game_state = game_state::resetting_board;
               }
               cell.next_state = cell_state::uncovered;
@@ -601,11 +613,11 @@ int __cdecl main() {
         // Useful for debugging potentially buggy boards
         //lcg_state = 0x1e0d6339;
 #ifdef _DEBUG
-        printf("Resetting game with board: 0x%x\n", lcg_state);
+        printf("Resetting board with seed: 0x%x\n", lcg_state);
 #endif
         reset_board(time);
-        ++game.completed_boards;
-        game.game_state = game_state::playing;
+
+        game.game_state     = game_state::playing;
         break;
     }
 

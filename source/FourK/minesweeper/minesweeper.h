@@ -41,6 +41,7 @@
 #define BORDER_DIM      0.9F
 #define CELL_DIM        (BORDER_DIM/(CELLS*0.5F))
 #define STATE_SLEEP     0.125F
+#define CLEAR_DEADLINE  60.F
 
 #define SU_RESTART_POS  (SU_BUFFER_LENGTH/2)
 
@@ -102,7 +103,10 @@ struct game {
   float       start_time          ;
   float       game_time           ;
   float       next_state_advance  ;
-  int         completed_boards    ;
+  float       boards_cleared      ;
+  float       lock_time           ;
+  float       locked_score        ;
+  float       last_score          ;
   game_state  game_state          ;
 
   board       board               ;
