@@ -271,6 +271,8 @@ extern "C" {
         if (mouse_left_button == 0 && mouse_left_button_previous == 1) {
           // Left button released
           switch (cell.state) {
+            case cell_state::uncovered:
+              break;
             case cell_state::covered_empty:
             case cell_state::covered_flag:
               cell.state        = cell.next_state = cell_state::uncovering;
@@ -585,7 +587,13 @@ int __cdecl main() {
   );
   assert(waveWriteOk == MMSYSERR_NOERROR);
 
-  auto done = false;
+#ifdef _DEBUG
+  auto frame_count  = 0.F;
+  auto start_time   = GetTickCount() / 1000.F;
+  auto next_report  = start_time+1.F;
+#endif
+
+   auto done = false;
 
   // Loop until done
   while(!done) {
@@ -600,6 +608,17 @@ int __cdecl main() {
     }
 
     auto time = GetTickCount() / 1000.F;
+
+#ifdef _DEBUG
+    ++frame_count;
+    if (time >= next_report) {
+      auto fps = frame_count/(time-start_time);
+      printf("FPS:%f\n", fps);
+      next_report = 1.F+time;
+    }
+#endif
+
+
     switch (game.game_state) {
       case game_state::resetting_game:
         // Useful for debugging potentially buggy boards
