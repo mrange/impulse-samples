@@ -1,18 +1,4 @@
-# Minesweeper
-
-## Commands
-
-### Generate SPIR-V human form
-
-Requires `layout(location=0)` on uniforms.
-
-```bash
-glslangValidator.exe shader.frag -G -H
-```
-
-## Current Rules
-
-Certainly! Here's a revised version:
+# Minesweeper 2024
 
 1. **Modified Minesweeper Rules**
 2. Each square displays a number indicating the count of adjacent bombs.
@@ -28,15 +14,3 @@ Certainly! Here's a revised version:
 12. On game over, your final score is displayed.
 13. Pressing the "R" key restarts the game, allowing you to start fresh with a new board.
 14. Pressing the "Escape" key quits the game.
-
-## Ideas
-
-### Scoring Ideas
-
-1. Score is constantly ticking down
-2. Score down tick speed is depending on how many revealed you have
-3. Perhaps score can't tick below some limit? Like last board score?
-3. Clearing a board awards points
-4. You need to clear boards in a certain time
-5. Triggering in a bomb don't end the game but hurts score
-6. When you are happy with your score you end the game to collect the score
