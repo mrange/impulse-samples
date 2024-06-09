@@ -87,7 +87,7 @@ struct cell {
   cell_state  state               ;
   cell_state  next_state          ;
 
-  cell*       near_cells[8];
+  cell*       near_cells[9]       ;
 };
 
 enum class game_state {

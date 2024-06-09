@@ -71,7 +71,7 @@ extern "C" {
   void reset_board(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_BOARD 0x2014
+    #define SZ_OF_BOARD 0x2254
     static_assert(SZ_OF_BOARD == sizeof(board), "The sizeof(board) and SZ_OF_BOARD must be the same");
     _asm {
       LEA edi, [game.board]
@@ -166,7 +166,7 @@ extern "C" {
   void reset_game(float time) {
 #ifdef NOCRT
     // Well this is awkward
-    #define SZ_OF_GAME 0x2030
+    #define SZ_OF_GAME 0x2270
     static_assert(SZ_OF_GAME == sizeof(game), "The sizeof(game) and SZ_OF_GAME must be the same");
     _asm {
       LEA edi, [game]
@@ -275,23 +275,23 @@ extern "C" {
             case cell_state::uncovered:
               {
                 int near_flags = 0;
-                for (auto ncell : cell.near_cells) {
-                  if (ncell) {
-                    if (ncell->state == cell_state::covered_flag) {
+                auto ncp = cell.near_cells;
+                assert(*ncp);
+                do {
+                    if ((*ncp)->state == cell_state::covered_flag) {
                       ++near_flags;
                     }
-                  }
-                }
+                } while(*++ncp);
                 if (near_flags == cell.near_bombs) {
-                  for (auto ncell : cell.near_cells) {
-                    if (ncell) {
-                      switch (ncell->state) {
+                  ncp = cell.near_cells;
+                  assert(*ncp);
+                  do {
+                      switch ((*ncp)->state) {
                         case cell_state::covered_empty:
-                          ncell->next_state = cell_state::uncovering;
+                          (*ncp)->next_state = cell_state::uncovering;
                           break;
                       }
-                    }
-                  }
+                  } while(*++ncp);
                 }
               }
               break;
@@ -340,33 +340,33 @@ extern "C" {
               }
               cell.next_state = cell_state::uncovered;
               if (cell.near_bombs == 0) {
-                for(auto near_cell : cell.near_cells) {
-                  if (near_cell) {
-                    switch(near_cell->state) {
-                      case cell_state::covered_empty:
-                      case cell_state::covered_flag:
-                        near_cell->next_state = cell_state::uncovering;
-                        break;
-                    }
+                auto ncp = cell.near_cells;
+                assert(*ncp);
+                do {
+                  switch((*ncp)->state) {
+                    case cell_state::covered_empty:
+                    case cell_state::covered_flag:
+                      (*ncp)->next_state = cell_state::uncovering;
+                      break;
                   }
-                }
+                } while(*++ncp);
               }
             }
             break;
           case cell_state::exploding:
             cell.next_state = cell_state::exploded;
-            for(auto near_cell : cell.near_cells) {
-              if (near_cell) {
-                switch(near_cell->state) {
-                  case cell_state::exploding:
-                  case cell_state::exploded:
-                    break;
-                  default:
-                    near_cell->next_state = cell_state::exploding;
-                    break;
-                }
+            auto ncp = cell.near_cells;
+            assert(*ncp);
+            do {
+              switch((*ncp)->state) {
+                case cell_state::exploding:
+                case cell_state::exploded:
+                  break;
+                default:
+                  (*ncp)->next_state = cell_state::exploding;
+                  break;
               }
-            }
+            } while(*++ncp);
             break;
         }
       }
