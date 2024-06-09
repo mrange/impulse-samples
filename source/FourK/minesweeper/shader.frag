@@ -32,7 +32,7 @@ const float
 // The result of the shader
 out vec4 fcol;
 // Set by draw_game
-uniform vec4[146] state;
+uniform vec4[12*12+2] state;
 
 // ----------------------------------------------------------------------------
 // The Shader
@@ -101,8 +101,32 @@ int ddigits[20] = int[](
   , 0xFB // R
   , 0x29 // T
   , 0x00 // BLANK
-  )
-  ;
+  );
+/*
+int ddigits[20] = int[](
+    125 // 0, O   (0x7D)
+  , 80  // 1      (0x50)
+  , 79  // 2      (0x4F)
+  , 87  // 3      (0x57)
+  , 114 // 4      (0x72)
+  , 55  // 5, S   (0x37)
+  , 63  // 6      (0x3F)
+  , 81  // 7      (0x51)
+  , 127 // 8      (0x7F)
+  , 119 // 9      (0x77)
+  , 123 // A      (0x7B)
+  , 62  // B      (0x3E)
+  , 45  // C      (0x2D)
+  , 94  // D      (0x5E)
+  , 47  // E      (0x2F)
+  , 43  // F      (0x2B)
+  , 44  // L      (0x2C)
+  , 251 // R      (0xFB)
+  , 41  // T      (0x29)
+  , 0   // BLANK  (0x00)
+);
+*/
+
 
 vec3 palette(float a) {
   return 1+sin(vec3(-4,3,1)/2+a);
@@ -194,46 +218,6 @@ float hash(vec2 co) {
   return fract(sin(dot(co.xy ,vec2(12.9898,58.233))) * 13758.5453);
 }
 
-vec3 background(vec2 p, float tm) {
-  vec3
-      col   = vec3(0)
-    , ro    = vec3(0,0,tm)
-    , rd    = normalize(vec3(p,2))
-    , ard   = abs(rd)
-    ;
-  float
-      maxDist = 1E3
-    , srdx    = sign(rd.x)
-    ;
-
-  for (int i = 1; i < 10; ++i) {
-    float tw = -(ro.x-6*sqrt(i))/ard.x;
-
-    vec3 wp = ro+rd*tw;
-
-    vec2
-        wp2 = wp.yz*2E-2
-      , wn2 = round(wp2)
-      , wc2 = wp2 - wn2
-      ;
-
-    if (hash(wn2+i+.5*sign(rd.x)) < .5) {
-      wc2 = vec2(wc2.y, -wc2.x);
-    }
-
-    float
-        fo = smoothstep(-.7, 1., sin(.1*wp.z+tm+i+srdx))
-      , wd0 = length(wc2+.5)-.5
-      , wd1 = length(wc2-.5)-.5
-      , wd  = abs(min(wd0, wd1))-.025
-      ;
-
-    col += palette(5E-2*tw+tm)*exp(-3E-3*tw*tw)*25E-4/max(abs(wd), 3E-3*fo)*fo;
-  }
-
-  return col;
-}
-
 void main() {
   vec2
       res = state[0].yz
@@ -257,15 +241,43 @@ void main() {
     ;
 
   mp.y     = -mp.y;
+
   vec3
-      col = background(p, atm*.5)
+      col = vec3(0)
     , p3  = vec3(p, 0)
     , mp3 = vec3(mp, 1)
     , rd3 = normalize(p3-vec3(0,0,10))
     , ld3 = normalize(mp3-p3)
     , ld0 = normalize(vec3(2,3,3))
     , mouseCol  = sqrt(palette(atm))
+    , ro    = vec3(0,0,atm*.5)
+    , rd    = normalize(vec3(p,2))
     ;
+
+  for (int i = 1; i < 10; ++i) {
+    float tw = -(ro.x-6*sqrt(i))/abs(rd).x;
+
+    vec3 wp = ro+rd*tw;
+
+    vec2
+        wp2 = wp.yz*2E-2
+      , wn2 = round(wp2)
+      , wc2 = wp2 - wn2
+      ;
+
+    if (hash(wn2+i+.5*sign(rd.x)) < .5) {
+      wc2 = vec2(wc2.y, -wc2.x);
+    }
+
+    float
+        fo = smoothstep(-.7, 1., sin(.1*wp.z+atm*.5+i+sign(rd.x)))
+      , wd0 = length(wc2+.5)-.5
+      , wd1 = length(wc2-.5)-.5
+      , wd  = abs(min(wd0, wd1))-.025
+      ;
+
+    col += palette(5E-2*tw+atm*.5)*exp(-3E-3*tw*tw)*25E-4/max(abs(wd), 3E-3*fo)*fo;
+  }
 
   cp = cp/cz-.5;
 
