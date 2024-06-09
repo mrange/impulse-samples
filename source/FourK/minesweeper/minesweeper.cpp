@@ -106,10 +106,11 @@ extern "C" {
         assert(i >= 0);
         assert(i < CELLS*CELLS);
         auto & cell       = game.board.cells[i];
-        cell.prev_state   = cell_state::covered_empty;
+        cell.prev_state   = cell_state::initial;
         cell.state        = cell_state::covered_empty;
         cell.next_state   = cell_state::covered_empty;
-        cell.changed_time = time;
+        cell.changed_time = time-game.start_time;
+        cell.mouse_time   = time-game.start_time;
 
         auto near_bombs   = 0;
         auto near_cells   = 0;
@@ -187,7 +188,7 @@ extern "C" {
   #pragma code_seg(".draw_game")
   void draw_game(float time) {
     int const size  = sizeof(state)/sizeof(GLfloat);
-    auto g_t        = time-game.start_time;
+    auto g_t        = GAME_SPEED*(time-game.start_time);
     auto r_x        = static_cast<GLfloat>(res_x);
     auto r_y        = static_cast<GLfloat>(res_y);
     auto m_x        = static_cast<GLfloat>(mouse_x);
@@ -204,7 +205,7 @@ extern "C" {
 
     // Setup state
     GLfloat* s  = state;
-    *s++        = time-application_start_time;
+    *s++        = GAME_SPEED*(time-application_start_time);
     *s++        = r_x;
     *s++        = r_y;
     *s++        = g_t;
@@ -296,8 +297,7 @@ extern "C" {
               break;
             case cell_state::covered_empty:
             case cell_state::covered_flag:
-              cell.state        = cell.next_state = cell_state::uncovering;
-              cell.changed_time = g_t;
+              cell.next_state   = cell_state::uncovering;
               break;
           }
         }
@@ -308,11 +308,10 @@ extern "C" {
             case cell_state::covered_empty:
             case cell_state::covered_flag:
               // Toggle flag tile
-              cell.state = cell.next_state = cell.state == cell_state::covered_empty
+              cell.next_state = cell.state == cell_state::covered_empty
                 ? cell_state::covered_flag
                 : cell_state::covered_empty
                 ;
-              cell.changed_time = g_t;
               break;
           }
         }

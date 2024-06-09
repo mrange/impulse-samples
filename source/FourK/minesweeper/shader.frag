@@ -40,13 +40,13 @@ layout(location=0) uniform vec4[12*12+2] state;
 //  fcol is the output fragment color
 
 const float
-    BORDER_DIM      = .9
+    BORDER_DIM      = .825
   , CELL_DIM        = BORDER_DIM/(CELLS*.5)
   , PI              = acos(-1)
   , TAU             = 2*PI
-  , tcw             = .1
+  , tcw             = BORDER_DIM/6
   , fz              = .25
-  , tz              = .04
+  , tz              = .05
   , cz              = CELL_DIM
   , tr              = .75
   , deps            = .1
@@ -68,13 +68,14 @@ const float
 
 vec2
     ddim        = vec2(.75, .075)
-  , bstates[6]  = vec2[](
+  , bstates[7]  = vec2[](
       vec2(0  ,0)
     , vec2(.5 ,0)
     , vec2(4  ,2)
     , vec2(10 ,1)
     , vec2(10 ,2)
     , vec2(4  ,1)
+    , vec2(10 ,1)
     )
   ;
 
@@ -271,9 +272,9 @@ void main() {
   cp /= cz;
   cp -= .5;
 
-  tcp.x -= -tcw*tr/2;
+  tcp.x -= -tcw*tr/2+p.y*0.2;
   tcp.y = abs(tcp.y);
-  tcp.y -= .95;
+  tcp.y -= .9;
 
   vec2
       tnp = mod2(tcp, vec2(tr*tcw, tcw))

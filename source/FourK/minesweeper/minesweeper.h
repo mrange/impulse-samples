@@ -30,7 +30,7 @@
 #define XRES        1600
 #define YRES        900
 
-//#define INIT_MUSIC
+#define INIT_MUSIC
 #define USE_SOUND_THREAD
 
 #define CELLS           12
@@ -38,12 +38,14 @@
 #define STATE_SIZE      2
 #define TOTAL_STATE     4*(CELLS*CELLS+STATE_SIZE)
 
-#define BORDER_DIM      0.9F
+#define BORDER_DIM      0.825F
 #define CELL_DIM        (BORDER_DIM/(CELLS*0.5F))
 #define STATE_SLEEP     0.125F
 #define CLEAR_DEADLINE  60.F
 
 #define SU_RESTART_POS  (SU_BUFFER_LENGTH/2)
+
+#define GAME_SPEED      1.F
 
 #ifdef _DEBUG
 #include "assert.h"
@@ -72,6 +74,7 @@ enum class cell_state {
 , uncovering    = 3
 , exploding     = 4
 , exploded      = 5
+, initial       = 6
 };
 
 struct cell {
