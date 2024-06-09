@@ -265,9 +265,8 @@ void main() {
       , wc2 = wp2 - wn2
       ;
 
-    if (hash(wn2+i+.5*sign(rd.x)) < .5) {
+    if (hash(wn2+i+.5*sign(rd.x)) < .5)
       wc2 = vec2(wc2.y, -wc2.x);
-    }
 
     float
         fo = smoothstep(-.7, 1., sin(.1*wp.z+atm*.5+i+sign(rd.x)))
