@@ -21,6 +21,7 @@
 
 const int
   CELLS       = 12
+, HCELLS      = CELLS/2
 , STATE_SIZE  = 2
 ;
 
@@ -29,9 +30,9 @@ const float
 ;
 
 // The result of the shader
-layout(location=0) out vec4 fcol;
+out vec4 fcol;
 // Set by draw_game
-layout(location=0) uniform vec4[12*12+2] state;
+uniform vec4[146] state;
 
 // ----------------------------------------------------------------------------
 // The Shader
@@ -41,7 +42,7 @@ layout(location=0) uniform vec4[12*12+2] state;
 
 const float
     BORDER_DIM      = .825
-  , CELL_DIM        = BORDER_DIM/(CELLS*.5)
+  , CELL_DIM        = BORDER_DIM/HCELLS
   , PI              = acos(-1)
   , TAU             = 2*PI
   , tcw             = BORDER_DIM/6
@@ -128,16 +129,13 @@ vec3 norm8(vec2 p, float r) {
   r8 *= r8;
   r8 *= r8;
   float z8 = r8-dot(p4, p4);
-  if (z8 > 0) {
-    float z = pow(z8, 1./8);
-    vec3 cp = vec3(p, z);
-    vec3 cp2 = cp*cp;
-    vec3 cp7 = cp2*cp2;
-    cp7 *= cp2*cp;
-    return normalize(cp7);
-  } else {
-    return vec3(0,0,1);
-  }
+  float z = pow(z8, 1./8);
+  if (z8 < 0) return vec3(0,0,1);
+  vec3 cp = vec3(p, z);
+  vec3 cp2 = cp*cp;
+  vec3 cp7 = cp2*cp2;
+  cp7 *= cp2*cp;
+  return normalize(cp7);
 }
 
 
@@ -269,12 +267,10 @@ void main() {
     , mouseCol  = sqrt(palette(atm))
     ;
 
-  cp /= cz;
-  cp -= .5;
+  cp = cp/cz-.5;
 
-  tcp.x -= -tcw*tr/2+p.y*0.2;
-  tcp.y = abs(tcp.y);
-  tcp.y -= .9;
+  tcp.x -= -tcw*tr/2+p.y/5;
+  tcp.y = abs(tcp.y)-.9;
 
   vec2
       tnp = mod2(tcp, vec2(tr*tcw, tcw))
@@ -282,12 +278,12 @@ void main() {
     ;
   tcp.y *= sty;
   cp -= np;
-  np += CELLS/2;
+  np += HCELLS;
 
   tcp /= tz;
 
   float 
-      fi = (np.x)+(np.y)*CELLS+STATE_SIZE
+      fi = np.x+np.y*CELLS+STATE_SIZE
     , ml = length(mp-p)
     ;
 
@@ -296,7 +292,7 @@ void main() {
       v = sty < 0 ? rem : sco
     , d = tnp.x > 0 ? mod(v*pow(10, tnp.x-6), 10) : textChars[int(tnp.x+5+3*(1-sty))];
     vec3
-        acol = palette(2.5+1.5*sty+0.4*tcp.y+(tnp.x < 1 ? 0:3))
+        acol = palette(2.5+1.5*sty+.4*tcp.y+(tnp.x < 1 ? 0:3))
       , icol = acol*.075
       ;
     col += digit(tcp, acol, icol, taa, d);
@@ -308,14 +304,14 @@ void main() {
     float
         cts = c.z
       , mts = c.w
-      , d1  = circle8(cp, 0.45)
+      , d1  = circle8(cp, .45)
       , mfo = smoothstep(mts+1./2, mts+1./8, gtm)
       , sfo = smoothstep(cts, cts+STATE_SLEEP, gtm)
       , bfo = exp(-2*fract(gtm-ml*ml/8))
       ;
 
     vec3
-        n     = norm8(cp, 0.45-1./80-mfo/40)
+        n     = norm8(cp, .45-1./80-mfo/40)
       , ccol  = tanh(8*col)/8
       ;
     float fre = 1+dot(n, rd3);
@@ -323,8 +319,8 @@ void main() {
 
 
     float
-        spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0.), 22)
-      , spe3 = pow(max(dot(ld3, reflect(rd3, n)), 0.), 44)
+        spe0 = pow(max(dot(ld0, reflect(rd3, n)), 0), 22)
+      , spe3 = pow(max(dot(ld3, reflect(rd3, n)), 0), 44)
       ;
 
     for (int i = 0; i < 2; ++i) {
@@ -361,7 +357,7 @@ void main() {
     col = mix(col, mix(palette(3.+p.y)/4,vec3(1), mfo), smoothstep(caa, -caa, d1));
   }
 
-  col += mouseCol*(1E-3/max(ml, 1E-3));
+//  col += mouseCol*(1E-3/max(ml, 1E-3));
 
   fcol = vec4(sqrt(tanh(col)), 1);
 }

@@ -191,7 +191,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <Optimization>Full</Optimization>
+      <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>NAKED_ENTRYPOINT;USE_CRINKLER;WINDOWS;A32BITS;SIMD;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
@@ -244,6 +244,9 @@
     <ClInclude Include="minesweeper.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="music.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
