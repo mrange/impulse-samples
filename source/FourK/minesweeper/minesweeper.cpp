@@ -38,7 +38,6 @@ extern "C" {
   char debugLog[0xFFFF];
 #endif
 
-  #pragma code_seg(".init_game")
   #pragma code_seg(".lcg_rand_uint32")
   uint32_t lcg_rand_uint32(uint32_t exclusive_max) {
     lcg_state = (1664525U * lcg_state + 1013904223U);

@@ -183,7 +183,7 @@ extern "C" {
       , 0                                   // hCursor
       , 0                                   // hbrBackground
       , 0                                   // lpszMenuName
-      , "Minesweeper2024"                   // lpszClassName
+      , "MS2024"                            // lpszClassName
   };
 
   #pragma data_seg(".waveFormatSpecification")
