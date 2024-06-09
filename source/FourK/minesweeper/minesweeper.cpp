@@ -39,27 +39,6 @@ extern "C" {
 #endif
 
   #pragma code_seg(".init_game")
-  void init_game() {
-    lcg_state = GetTickCount()+0x19740531U;
-//    lcg_state = 19740531;
-
-    // Bit of debugging info during debug builds
-    //  Don't want to waste bytes on that in Release mode
-#ifdef _DEBUG
-    glEnable(GL_DEBUG_OUTPUT);
-    ((PFNGLDEBUGMESSAGECALLBACKPROC)wglGetProcAddress("glDebugMessageCallback"))(debugCallback, 0);
-#endif
-
-  // Compiles the provided fragment shader into a shader program
-  fragmentShaderProgram = ((PFNGLCREATESHADERPROGRAMVPROC)wglGetProcAddress(nm_glCreateShaderProgramv))(GL_FRAGMENT_SHADER, 1, fragmentShaders);
-
-#ifdef _DEBUG
-  ((PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog"))(fragmentShaderProgram, sizeof(debugLog), NULL, debugLog);
-  printf(debugLog);
-  glDisable(GL_DEBUG_OUTPUT);
-#endif
-  }
-
   #pragma code_seg(".lcg_rand_uint32")
   uint32_t lcg_rand_uint32(uint32_t exclusive_max) {
     lcg_state = (1664525U * lcg_state + 1013904223U);
@@ -552,7 +531,24 @@ int __cdecl main() {
   assert(makeOk);
 
   // Init our game
-  init_game();
+  lcg_state = GetTickCount()+0x19740531U;
+//    lcg_state = 19740531;
+
+    // Bit of debugging info during debug builds
+    //  Don't want to waste bytes on that in Release mode
+#ifdef _DEBUG
+  glEnable(GL_DEBUG_OUTPUT);
+  ((PFNGLDEBUGMESSAGECALLBACKPROC)wglGetProcAddress("glDebugMessageCallback"))(debugCallback, 0);
+#endif
+
+  // Compiles the provided fragment shader into a shader program
+  fragmentShaderProgram = ((PFNGLCREATESHADERPROGRAMVPROC)wglGetProcAddress(nm_glCreateShaderProgramv))(GL_FRAGMENT_SHADER, 1, fragmentShaders);
+
+#ifdef _DEBUG
+  ((PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog"))(fragmentShaderProgram, sizeof(debugLog), NULL, debugLog);
+  printf(debugLog);
+  glDisable(GL_DEBUG_OUTPUT);
+#endif
 
 #ifdef INIT_MUSIC
   // Now init the music.
