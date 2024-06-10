@@ -188,7 +188,7 @@ extern "C" {
     *s++        = r_y;
     *s++        = g_t;
     *s++        = m_x;
-    *s++        = m_y;
+    *s++        = r_y-m_y;
     *s++        = cs ;
     *s++        = static_cast<GLfloat>((CELLS*CELLS-BOMBS_PER_BOARD) - game.board.uncovered);
     assert(s == state+4*STATE_SIZE);

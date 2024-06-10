@@ -50,7 +50,6 @@ const float
   , tz              = .05
   , cz              = CELL_DIM
   , tr              = .75
-  , deps            = .1
   , textChars[12]   = float[](
         5   // S
       , 12  // C
@@ -180,37 +179,20 @@ vec3 digit(vec2 p, vec3 acol, vec3 icol, float aa, float n) {
     , p2 = p
     ;
 
-  if (ap.x > (.5+ddim.y+deps)||ap.y > (1+ddim.y+deps)) return vec3(0);
+  if (ap.x > (.6+ddim.y)||ap.y > (1.1+ddim.y)) return vec3(0);
 
   p0.y -= 1;
   float n0 = round(p0.y);
   p0.y -= n0;
 
-  p1 = abs(p1);
-  p1 = p1.yx;
-  p1 -= .5;
-
-  p2.y  = abs(p.y);
-  p2.y  -= .5;
+  p1    = abs(p1.yx)-.5;
+  p2.y  = abs(p.y)-0.5;
   p2    = abs(p2);
 
-  float
-      d0  = segmentx(p0, ddim)
-    , d1  = segmentx(p1, ddim)
-    , d2  = dot(normalize(vec2(1, -1)), p2)
-    , d   = min(d0, d1)
-    , sx  = (n1.x+1)/2 + n1.y+1
-    , sy  = -n0
-    , s   = d2 > 0 ? (3+sx) : sy
-    , m   = floor(n)
-    ;
-
-  int digit = ddigits[int(m)];
-
   // Praying bit shift operations aren't TOO slow
-  vec3 scol = ((digit & (1 << int(s))) == 0) ? icol : acol;
+  vec3 scol = ((ddigits[int(floor(n))] & (1 << int(dot(vec2(1, -1)/sqrt(2), p2) > 0 ? (3+(n1.x+1)/2 + n1.y+1) : -n0))) == 0) ? icol : acol;
 
-  return scol*smoothstep(aa, -aa, d);
+  return scol*smoothstep(aa, -aa, min(segmentx(p0, ddim), segmentx(p1, ddim)));
 }
 
 // License: Unknown, author: Unknown, found: don't remember
@@ -229,10 +211,8 @@ void main() {
     ;
 
   float
-      atm = state[0].x
+      atm = state[0].x/2
     , gtm = state[0].w
-    , sco = state[1].z
-    , rem = state[1].w
     , aa  = sqrt(2) / res.y
     , caa = aa/cz
     , taa = aa/tz
@@ -240,18 +220,18 @@ void main() {
     , sty = sign(tcp.y)
     ;
 
-  mp.y     = -mp.y;
+  //mp.y     = -mp.y;
 
   vec3
       col = vec3(0)
     , p3  = vec3(p, 0)
     , mp3 = vec3(mp, 1)
+    , ro  = vec3(0,0,atm)
+    , rd  = normalize(vec3(p,2))
     , rd3 = normalize(p3-vec3(0,0,10))
     , ld3 = normalize(mp3-p3)
     , ld0 = normalize(vec3(2,3,3))
     , mouseCol  = sqrt(palette(atm))
-    , ro    = vec3(0,0,atm*.5)
-    , rd    = normalize(vec3(p,2))
     ;
 
   for (int i = 1; i < 10; ++i) {
@@ -269,13 +249,11 @@ void main() {
       wc2 = vec2(wc2.y, -wc2.x);
 
     float
-        fo = smoothstep(-.7, 1., sin(.1*wp.z+atm*.5+i+sign(rd.x)))
-      , wd0 = length(wc2+.5)-.5
-      , wd1 = length(wc2-.5)-.5
-      , wd  = abs(min(wd0, wd1))-.025
+        fo = smoothstep(-.7, 1., sin(.1*wp.z+atm+i+sign(rd.x)))
+      , wd  = abs(min(length(wc2+.5)-.5, length(wc2-.5)-.5))-.025
       ;
 
-    col += palette(5E-2*tw+atm*.5)*exp(-3E-3*tw*tw)*25E-4/max(abs(wd), 3E-3*fo)*fo;
+    col += palette(5E-2*tw+atm)*exp(-3E-3*tw*tw)*25E-4/max(abs(wd), 3E-3*fo)*fo;
   }
 
   cp = cp/cz-.5;
@@ -300,7 +278,7 @@ void main() {
 
   if (tnp.y == 0 && abs(tnp.x-.5) < 6) {
     float
-      v = sty < 0 ? rem : sco
+      v = sty < 0 ? state[1].w : state[1].z
     , d = tnp.x > 0 ? mod(v*pow(10, tnp.x-6), 10) : textChars[int(tnp.x+5+3*(1-sty))];
     vec3
         acol = palette(2.5+1.5*sty+.4*tcp.y+(tnp.x < 1 ? 0:3))
@@ -362,10 +340,8 @@ void main() {
       ccol += m*(spe0/4+spe3*mouseCol)*fre*16*step(1, cs);
     }
 
-
     col = mix(col, ccol, smoothstep(caa, -caa, d1));
-    d1 = abs(d1)-1./80;
-    col = mix(col, mix(palette(3.+p.y)/4,vec3(1), mfo), smoothstep(caa, -caa, d1));
+    col = mix(col, mix(palette(3.+p.y)/4,vec3(1), mfo), smoothstep(caa, -caa, abs(d1)-1./80));
   }
 
 //  col += mouseCol*(1E-3/max(ml, 1E-3));
